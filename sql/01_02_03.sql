@@ -1,0 +1,916 @@
+SELECT * FROM employees;
+
+SELECT * FROM departments;
+SELECT * FROM locations;
+SELECT * FROM countries;
+SELECT * FROM regions;
+
+SELECT * FROM jobs;
+
+SELECT department_id, location_id
+  FROM departments;
+
+SELECT last_name, salary, salary, commission_pct,
+       salary * 12 + salary * commission_pct
+FROM employees;
+// commission_pct = (null) 인 경우, 5번째 컬럼 결과가 (null)
+
+DESCRIBE employees;
+
+SELECT last_name, salary, salary, commission_pct 커미션,
+       salary * 12 + salary * commission_pct AS "Annual-Salary"
+FROM employees;
+
+SELECT employee_id, first_name || ' ' || last_name AS "FullName"
+FROM employees;
+
+SELECT employee_id, first_name || ' ' || last_name || ' : ' || salary AS salary_details
+FROM employees;
+
+// 오류
+SELECT employee_id, first_name || ' ' || last_name || ''salary : ' || salary AS salary_details
+FROM employees;
+
+SELECT employee_id, first_name || ' ' || last_name || '''salary : ' || salary AS salary_details
+FROM employees;
+
+SELECT employee_id, first_name || ' ' || last_name || q'['salary : ]' || salary AS salary_details
+FROM employees;
+
+SELECT department_id
+FROM employees;
+
+// 부서 중복 제거됨
+SELECT DISTINCT department_id
+FROM employees;
+
+// 부서와 업무가 모두 같은 경우만 중복 데이터로 제거됨
+SELECT DISTINCT department_id, job_id
+FROM employees;
+
+// 안됨
+SELECT DISTINCT department_id, job_id
+FROM employees;
+
+// 안됨
+SELECT department_id, DISTINCT job_id
+FROM employees;
+
+DESCRIBE employees
+DESC employees
+
+// WHERE
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE department_id = 50;
+
+// 오류
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE last_name = king;
+
+// 성공: 결과가 안나옴. 사실은 King 이 있음.
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE last_name = 'king';
+
+// 성공: 대소문자 일치시키면 결과가 2건 나옴.
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE last_name = 'King';
+
+// hire_date(입사일, 고용된 날짜)
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees;
+// 116번 사원이 15/12/24 입사
+
+// 날짜는 형식이 중요함.
+// 12/12/07 : 미국 2007년 12월 12일. 한국 2012년 12월 07일
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE hire_date = '15/12/24';
+
+// '2015/12/24' 로 해도 검색됨. DBMS가 잘 해석해줌.
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE hire_date = '2015/12/24';
+
+// 미국 사람이 검색한다면, '24/12/15'로 입력할 것이다.
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE hire_date = '24/12/15';
+
+// 12를 -> 2015로 바꿔준다면, ORA-01830: 날짜 형식의 지정에 불필요한 데이터가 포함되어 있습니다
+// 변환 함수를 사용하면 해결 가능하다.
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE hire_date = '24/12/2015';
+
+// 12 -> 12월 : 안됨. ORA-01861: 리터럴이 형식 문자열과 일치하지 않음
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE hire_date = '15/12월/24';
+
+// 문자의 대소비교는 ASCII 코드 값을 비교한다
+// 문자에 대한 부등호
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE last_name >= 'King';
+
+// 날짜는 미래로 갈수록 커지고, 과거로 갈수록 작아진다. 즉, 날짜도 정렬 가능하다
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE hire_date > '15/12/24';
+
+// <>, !=, ^= : King 빼고 다 나옴
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE last_name != 'King';
+
+// <>, !=, ^=
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE hire_date <> '15/12/24';
+
+// BETWEEN 하한값 AND 상한값: 반드시 하한값을 먼저 써야 한다.
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE salary BETWEEN 6000 AND 9000;
+
+// BETWEEN 상한값 AND 하한값: 에러는 안나오는데, 결과가 없다.
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE salary BETWEEN 9000 AND 6000;
+
+// 이것도 상한값 하한값 위치 바꾸면 데이터 안나온다.
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE hire_date BETWEEN '17/01/01' AND '17/12/31';
+
+// 문자도 BETWEEN 가능
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE last_name BETWEEN 'King' AND 'Miller';
+
+// IN 연산자
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE department_id IN (50, 60, 80); // 50 또는 60 또는 80
+
+-- LIKE 연산자
+-- %: 0개 이상의 문자를 대체
+-- 한문자 J 도 나옴
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE last_name LIKE 'J%';
+
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE last_name LIKE '%h%';
+
+-- _(언더바): 임의의 한 문자를 대체
+-- '_h%' : 두번째 문자가 h인 사람만 나옴
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE last_name LIKE '_h%';
+
+-- '__h%' : 세번째 문자가 h인 사람만 나옴
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE last_name LIKE '__h%';
+
+-- '_____' : 다섯글자로 이루어진 이름이 나옴
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE last_name LIKE '_____';
+
+-- job_id : 데이터 값 자체에 _(언더바)가 있다. 이 _는 LIKE 의 _와는 다르다
+-- _와 % 예외처리
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE job_id LIKE 'ST\_%' ESCAPE '\';
+
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE job_id LIKE 'ST#_%' ESCAPE '#';
+
+-- NULL, null
+-- department_id = NULL : 에러 없으나 결과 없음. null 값은 비교를 못한다
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE department_id = NULL;
+
+-- IS NULL : 결과 나옴. IS NULL 이 하나의 연산자.
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE department_id IS NULL;
+
+-- AND: 둘다 만족
+-- OR : 둘다 만족하지 않는 사람 빼고 다나옴.
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+WHERE salary > 6000
+AND last_name LIKE 'J%';
+
+-- NOT BETWEEN A AND B
+-- NOT IN(A, B)
+-- NOT LIKE
+-- IS NOT NULL
+
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE department_id IS NOT NULL;
+
+-- DEPARTMENT_ID 가 NULL 인 사람도 나오는 것을 확인할 수 있다. (52번 행)
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE salary > 6500
+OR department_id > 50;
+
+-- department_id 가 NULL 인게 안나온다. ★
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE department_id IN (80, 90, NULL);
+
+-- 위를 풀면 다음과 같이 되어. department_id가 NULL 인게 안나온다. ★
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE department_id = 80
+OR  department_id = 90
+OR department_id = NULL;
+
+-- 80, 90을 제외하고 가져와야 할 것 같은데, 아무것도 안 가져옴.
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE department_id NOT IN (80, 90, NULL);
+
+-- NOT IN 은 값만 부정하는 게 아니라, OR 을 AND 로 바꾼다.
+-- department_id <> NULL 가 있어서, 이거와 AND 를 하면, 모든 결과가 안나온다.
+-- 그러므로, NOT IN() 에 서브쿼리를 쓸 경우, 
+-- 서브쿼리에서 NULL 이 나오면 결과가 아무것도 안나올 수 있다.(★)
+SELECT employee_id, last_name, salary, job_id, department_id
+FROM employees
+WHERE department_id <> 80
+AND  department_id <> 90
+AND department_id <> NULL;
+
+-- https://docs.oracle.com/cd/B13789_01/server.101/b10759/conditions004.htm
+-- OR TRUTH TABLE 예시
+SELECT employee_id, commission_pct, salary FROM employees
+   WHERE commission_pct = .4 OR salary > 20000;
+
+-- 정렬: 오름차순
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+ORDER BY salary;
+
+-- 정렬: 내림차순
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+ORDER BY salary DESC;
+
+-- 부서가 같은 부서 내에서 salary별 정렬. department_id, salary 각각 오름차순 내림차순 정렬
+SELECT employee_id, last_name, salary, hire_date, department_id
+FROM employees
+ORDER BY department_id ASC, salary DESC;
+
+-- order by 에 표현식도 가능
+SELECT employee_id, last_name, salary*12 연봉, department_id
+FROM employees
+ORDER BY department_id ASC, salary*12 DESC;
+
+-- 별칭도 가능
+SELECT employee_id, last_name, salary*12 연봉, department_id
+FROM employees
+ORDER BY department_id ASC, 연봉 DESC;
+
+-- 포지션 번호(위치값)으로도 가능. SELECT 절에서 3번째는 salary*12 연봉.
+SELECT employee_id, last_name, salary*12 연봉, department_id
+FROM employees
+ORDER BY department_id ASC, 3 DESC;
+
+-- select절에 없어도 order by 에 적을 수 있음
+SELECT employee_id, last_name, salary*12 연봉, department_id
+FROM employees
+ORDER BY department_id ASC, hire_date DESC;
+
+-- order by절에는 컬럼, 표현식, 별칭, 포지션 범위 모두 올 수 있다.
+-- where 절은 언제나 FROM 뒤
+-- order by 절은 언제나 문장 맨뒤.
+
+SELECT employee_id, last_name, salary*12 연봉, department_id
+FROM employees
+WHERE salary*12 > 120000
+ORDER BY department_id ASC, hire_date DESC;
+
+-- WHERE 절에서는 SELECT 절에서 명명한 별칭 사용 불가
+SELECT employee_id, last_name, salary*12 연봉, department_id
+FROM employees
+WHERE 연봉 > 120000
+ORDER BY department_id ASC, hire_date DESC;
+
+
+-- 3. SQL 단일행 함수
+
+-- 일반 테이블에 하니까, 각 열마나 LOWER('Oracle Database') 를 붙여서 나옴.
+-- 테이블의 행수만큼 결과값 반환
+SELECT LOWER('Oracle Database') FROM employees;
+
+-- Oracle 에서는 FROM 절을 생략할 수 없다.
+-- DUAL
+SELECT LOWER('Oracle Database') FROM DUAL;
+
+DESC DUAL;
+
+SELECT LOWER('Oracle Database'),
+       UPPER('Oracle Database'),
+       INITCAP('oracle database'),
+       INITCAP('oracle_database'),
+       INITCAP('oracle-database')
+FROM DUAL;
+
+SELECT employee_id, UPPER(first_name), UPPER(last_name), INITCAP(job_id)
+FROM employees;
+
+
+-- 아무것도 안나옴. 첫글자 대문자인 'King' 이 있음
+-- 사용자가 'King' (첫글자 대문자) 을 제대로 입력해야 함
+SELECT * FROM employees WHERE last_name = 'king';
+
+-- 모든 사원의 last_name 을 소문자로 바꾼 후, 비교해서 찾아옴 -> 비효율적
+-- 사용자가 'king'을 입력해도 됨
+SELECT * FROM employees WHERE LOWER(last_name) = 'king';
+
+-- INITCAP 한번만 사용
+-- 사용자가 'king'을 입력해도 됨
+SELECT * FROM employees WHERE last_name = INITCAP('king');
+
+SELECT employee_id, CONCAT(first_name, ' ', last_name) FROM employees;
+
+-- 보통 함수는 인수의 개수가 정해짐. ORA-00909: 인수의 개수가 부적합합니다
+SELECT employee_id, CONCAT(first_name, ' ', last_name) FROM employees;
+
+-- 함수 중첩 사용
+SELECT employee_id, CONCAT(CONCAT(first_name, ' '), last_name) FROM employees;
+
+-- 연산자(||)와 함수(CONCAT)는 성능에서 차이가 난다.
+-- 이는 대용량(몇십만건, 몇백만건; 적어도 몇 GB 이상)에서 의미가 있다.
+
+SELECT SUBSTR('HelloWorld', 1, 5), SUBSTR('HelloWorld', 6) FROM DUAL;
+
+SELECT SUBSTR('오라클 데이터베이스', 1, 5), SUBSTR('오라클 데이터베이스', 6) FROM DUAL;
+-- 결과: 오라클 데    이터베이스
+
+-- -3 : 마이너스(-)는 뒤에서 부터
+SELECT employee_id, last_name, SUBSTR(last_name, -3, 3) FROM employees;
+
+-- -1 : 마이너스(-)는 뒤에서 부터
+SELECT employee_id, last_name, SUBSTR(last_name, -1, 1) FROM employees;
+
+SELECT * FROM employees WHERE SUBSTR(last_name, -1, 1) = 'n';
+-- 다음과 같다
+SELECT * FROM employees WHERE last_name LIKE '%n';
+-- 함수가 좋을 수가 있고, 연산자가 좋을 수가 있다. 그러데, 일반적으로 함수가 더 빠르다.
+-- 이 둘다 인덱스를 무효화 하는 구문이다. 그런데, 첫번째는 인덱스를 타게 만들 수 있다.
+
+SELECT LENGTH('Oracle'), LENGTH('오라클') FROM DUAL;
+-- 결과 6 3
+
+-- B는 Byte
+SELECT LENGTHB('Oracle'), LENGTHB('오라클') FROM DUAL;
+-- 결과 6 9
+
+-- 문자 데이터 입력시 짤림. 에러 안나서, 나중에 짤린걸 알게 될 수 있음.
+
+-- INSTR : 소문자 'l' 이 처음으로 나온 위치값을 반환
+-- 인자 'l' : 소문자L 임
+SELECT INSTR('HelloWorld', 'l') FROM DUAL;
+-- 결과: 3 (지시하는 글자가 포함된 위치값)
+
+-- INSTR 인수는 4개
+-- 1 : 처음부터, 3: 3번째 'l'(소문자 L)
+SELECT INSTR('HelloWorld', 'l', 1, 3) FROM DUAL;
+
+-- INSTR은 대소문자를 구분한다.
+SELECT INSTR('HelloWorld', 'h') FROM DUAL;
+-- 결과 0 : 소문자 'h' 는 없다. 그러므로 위치값이 0 이 나온다.
+
+-- INSTR 는 지정된 문자가 있는지 없는지 판별할 때 많이 사용 -> LIKE 대신 사용 가능
+-- first_name 에 소문자 'a'가 없는 사람 검색 (★)
+SELECT * FROM employees WHERE INSTR(first_name, 'a') = 0;
+SELECT * FROM employees WHERE first_name LIKE '%a%';
+
+-- first_name 에 소문자 'a'가 있는 사람 검색 (★)
+SELECT * FROM employees WHERE INSTR(first_name, 'a') <> 0;
+SELECT * FROM employees WHERE first_name NOT LIKE '%a%';
+
+SELECT RPAD(first_name, 15, '*'), LPAD(salary, 8, '*') FROM employees;
+
+-- TRIM : 접두어 또는 접미어를 제거하는 기능
+-- BOTH : 기본값
+SELECT TRIM('H' FROM 'HelloWorld') FROM DUAL;
+SELECT TRIM('w' FROM 'window') FROM DUAL;
+SELECT TRIM(BOTH 'w' FROM 'window') FROM DUAL;
+
+-- 엑셀에서 0000024000 데이터가 있을 경우, 앞에 있는 0을 제거해서 24000을 만들고 싶다
+-- LEADING : 선행하는 '0' 만 떼어냄
+SELECT TRIM(LEADING '0' FROM '0000024000') FROM DUAL;
+
+-- LEADING : 선행하는 '0' 만 떼어냄
+SELECT TRIM(TRAILING '0' FROM '0000024000') FROM DUAL;
+
+-- 국제 전화 번호 형식으로 변경
+-- 010-1234-5600 -> +8210 : 앞의 영을 떼어야 함
+SELECT CONCAT('+82', TRIM(LEADING '0' FROM '010-1234-5600')) FROM DUAL;
+-- 결과: +8210-1234-5600
+
+-- ORA-30001: 트림 설정은 하나 문자만 가지고 있어야 합니다
+SELECT TRIM('ab' FROM 'ababxxxababyyyabababab') FROM DUAL;
+
+-- 두개 자르고 싶으면 TRIM 을 중첩하면 됨.
+
+SELECT RTRIM('ababxxxababyyyabababab', 'ab'),
+       LTRIM('ababxxxababyyyabababab', 'ab')
+  FROM dual;
+  
+SELECT RTRIM(LTRIM('ababxxxababyyyabababab', 'ab'), 'ab')
+FROM dual;
+
+
+SELECT employee_id, CONCAT(first_name, last_name) NAME,
+       job_id, LENGTH (last_name),
+       INSTR(last_name, 'a') "Contains 'a'?"
+FROM employees
+WHERE SUBSTR(job_id, 4) = 'REP';
+
+
+SELECT last_name, email FROM employees;
+-- 결과: 이메일에 계정명만 나옴. 사내메일이므로 도메인 불필요.
+-- LAST_NAME   EMAIL
+-- King	SKING
+-- Yang	NYANG
+-- Garcia	LGARCIA
+
+SELECT employee_id
+     , CONCAT(first_name, last_name) NAME
+     , LENGTH (last_name)
+     , INSTR(last_name, 'a') "Contains 'a'?"
+FROM employees
+WHERE SUBSTR(last_name, -1, 1) = 'n';
+
+SELECT employee_id
+     , last_name
+     , CONCAT(email,'@oracle.com') AS "Email Address"
+FROM employees;
+
+-- 번호이지만 번호가 아닌 데이터 : 전화번호 : 번호라면 010~~~에서 앞의 0은 잘림
+-- 주민등록번호: 00~09로 시작하는 주민등록번호. 이 역시 숫자로 저장하면 앞이 잘림
+
+SELECT ROUND(45.926, 2)
+     , TRUNC(45.926, 2)
+     , MOD(1600, 300)
+     , CEIL(3.14)
+     , FLOOR(3.14)
+FROM DUAL;
+-- 결과: 45.93	45.92	100	4	3
+
+SELECT ROUND(45.923,2), ROUND(45.923,0),ROUND(45.923,-1) FROM DUAL;
+-- 결과: 45.92	46	50
+
+SELECT TRUNC(45.923,2), TRUNC(45.923),TRUNC(45.923,-2) FROM DUAL;
+-- 결과: 45.92	45	0
+
+SELECT last_name, salary, MOD(salary, 5000)
+FROM employees
+WHERE job_id = 'SA_REP';
+
+SELECT CEIL(4.457), CEIL(-4.457), FLOOR(4.457), FLOOR(-4.457), ROUND(-4.457)
+FROM dual;
+
+SELECT ROUND(4.457), ROUND(-4.457), ROUND(4.557), ROUND(-4.557)
+FROM dual;
+
+-- CONCAT : 이메일에 도메인 붙이기, 전화번호앞에 +82 붙이기
+
+SELECT POWER(2, 10), ABS(100), ABS(-100)
+FROM dual;
+
+
+SELECT last_name, hire_date
+FROM employees
+WHERE last_name like 'G%';
+
+
+-- sysdate : DBMS 실행 중인 컴퓨터의 날짜
+-- current_date : 사용자 컴퓨터의 날짜
+
+SELECT sysdate, current_date FROM DUAL;
+-- 25/07/15	25/07/15
+
+SELECT sysdate, systimestamp FROM DUAL;
+-- 25/07/15	25/07/15 09:23:24.287000000 +09:00
+
+SELECT current_date, current_timestamp FROM DUAL;
+-- 25/07/15	25/07/15 09:29:24.256000000 ASIA/SEOUL
+
+SELECT systimestamp, current_timestamp FROM DUAL;
+-- 25/07/15 09:30:29.109000000 +09:00	25/07/15 09:30:29.109000000 ASIA/SEOUL
+
+SELECT sysdate, current_date, systimestamp, current_timestamp FROM DUAL;
+-- 25/07/15	25/07/15	25/07/15 09:31:39.504000000 +09:00	25/07/15 09:31:39.504000000 ASIA/SEOUL
+
+* Oracle 지원하는 날짜 데이터 유형
+-- DATE : 전통적으로 많이 사용. 시간 데이터(시분초)를 알지만 표시 안함. 변환 함수를 사용하면 시분초를 볼 수 있음.
+-- TIMESTAMP : 세기, 년, 월, 일, 시, 분, 초
+-- TIMESTAMP WITH TIME ZONE
+-- TIMESTAMP WITH LOCAL TIME ZONE : 사용자 지역별 자동 시간 계산
+
+-- 하루가 안되는거 절사
+SELECT employee_id, last_name, sysdate - hire_date AS 근무일수
+FROM employees
+WHERE department_id = 80;
+-- 145	Singh	3940.399236111111111111111111111111111111
+-- 146	Partners	3844.399236111111111111111111111111111111
+-- (후략)
+
+SELECT employee_id, last_name, TRUNC(sysdate - hire_date) AS 근무일수
+FROM employees
+WHERE department_id = 80;
+-- 145	Singh	3940
+-- 146	Partners	3844
+-- (후략)
+
+-- 근무주수
+SELECT employee_id, last_name, TRUNC((sysdate - hire_date) / 7) AS 근무주수
+FROM employees
+WHERE department_id = 80;
+-- 145	Singh	562
+-- 146	Partners	549
+-- (후략)
+
+SELECT sysdate, sysdate + 10, sysdate - 10 FROM dual;
+-- 25/07/15	25/07/25	25/07/05
+
+SELECT employee_id, last_name, hire_date,
+       MONTHS_BETWEEN(sysdate, hire_date) AS 근무개월수
+FROM employees
+WHERE department_id = 80;
+-- 한달 미만의 날짜는 소수로 나옴
+-- 145	Singh	14/10/01	129.464713635005973715651135005973715651
+-- 146	Partners	15/01/05	126.335681376941457586618876941457586619
+-- 147	Errazuriz	15/03/10	124.174391054360812425328554360812425329
+-- 148	Cambrault	17/10/15	93
+
+SELECT employee_id, last_name, hire_date,
+       TRUNC(MONTHS_BETWEEN(sysdate, hire_date)) AS 근무개월수
+FROM employees
+WHERE department_id = 80;
+-- 145	Singh	14/10/01	129
+-- 146	Partners	15/01/05	126
+-- 147	Errazuriz	15/03/10	124
+-- 148	Cambrault	17/10/15	93
+
+SELECT employee_id, last_name, hire_date,
+       TRUNC(MONTHS_BETWEEN(hire_date, sysdate)) AS 근무개월수
+FROM employees
+WHERE department_id = 80;
+-- 145	Singh	14/10/01	-129
+-- 146	Partners	15/01/05	-126
+-- 147	Errazuriz	15/03/10	-124
+-- 148	Cambrault	17/10/15	-93
+
+
+SELECT ADD_MONTHS(sysdate, 3) FROM dual;
+-- 25/10/15
+
+-- 요일 반환 함수
+SELECT sysdate, NEXT_DAY(sysdate, '목') FROM dual;
+-- 25/07/15	25/07/17
+
+-- 앞으로 돌아올 가장 가까운 월요일의 날짜를 반환
+SELECT sysdate, NEXT_DAY(sysdate, '월요일') FROM dual;
+-- 25/07/15	25/07/21
+
+-- ORA-01846: 지정한 요일이 부적합합니다.
+-- 날짜는 국가별 날짜 형식이 있다. 지금 시스템의 셋팅이 한국이다. 그러므로 FRIDAY는 안됨.
+SELECT sysdate, NEXT_DAY(sysdate, 'FRIDAY') FROM dual;
+
+-- 요일은 일요일(1)을 기준으로 시작하고, 토요일(7)
+SELECT sysdate, NEXT_DAY(sysdate, 6) FROM dual;
+-- 25/07/15	25/07/18
+
+-- 이번달 마지막 날
+SELECT sysdate, LAST_DAY(sysdate) FROM dual;
+-- 25/07/15	25/07/31
+
+-- PT26
+SELECT employee_id,
+       hire_date,
+       TRUNC(MONTHS_BETWEEN (SYSDATE, hire_date)) 근무기간,
+       ADD_MONTHS (hire_date, 6) 직무능력검사일,
+       NEXT_DAY (hire_date, '월요일') 교육시작일,
+       LAST_DAY(hire_date)+10 첫급여일
+FROM employees;
+-- 100	13/06/17	144	13/12/17	13/06/24	13/07/10
+-- 101	15/09/21	117	16/03/21	15/09/28	15/10/10
+
+-- 년 추출
+SELECT sysdate, EXTRACT(year FROM sysdate) FROM dual;
+-- 25/07/15	2025
+
+-- 월 추출
+SELECT last_name, hire_date, hire_date,
+       EXTRACT (MONTH FROM hire_date) AS 입사일
+FROM employees;
+-- King	13/06/17	13/06/17	6
+-- Yang	15/09/21	15/09/21	9
+
+SELECT sysdate, EXTRACT(year FROM sysdate) FROM dual;
+
+-- YEAR 는 무조건 1월 1일,
+-- DD(오늘 하루를 얘기함????) : 0시 0분 0초로 셋팅,
+-- D: 일요일 0시 0분 0초로 셋팅
+SELECT systimestamp,
+       ROUND(sysdate, 'YEAR'), ROUND(sysdate, 'MONTH'),
+       ROUND(sysdate, 'DD'), ROUND(sysdate, 'D')
+FROM dual;
+-- 25/07/15 10:13:05.412000000 +09:00	26/01/01	25/07/01	25/07/15	25/07/13
+
+-- 지금 시점에서는 년도만 다름.
+-- TRUNC 는 무조건 올해. 다음해가 나오지 않음.
+SELECT systimestamp,
+       TRUNC(sysdate, 'YEAR'), TRUNC(sysdate, 'MONTH'),
+       TRUNC(sysdate, 'DD'), TRUNC(sysdate, 'D')
+FROM dual;
+-- 25/07/15 10:13:12.864000000 +09:00	25/01/01	25/07/01	25/07/15	25/07/13
+
+-- 날짜계산방법1: 계산 수행하고, 결과를 숫자함수를 적용해서, 빼고 보여줌.
+-- 날짜계산방법2: 날짜 초기화 한 후 계산하면 무조건 정수 나옴.
+
+-- 5000
+-- 21/02/23
+--> 숫자
+
+-- $5,000 --> 금액이므로 이것도 숫자의 개념이 강함
+-- 2025년 7월 15일
+-- 21/02/23 29:00:00
+-- 문자
+
+-- 데이터 변환은 숫자와 문자, 날짜와 문자 사이의 변환이다. 
+-- TO_NUMBER, TO_CHAR, TO_DATE
+
+-- 암시적 데이터 유형 변환 : 자동
+-- 오라클이 문자 '10000'을 숫자 10000으로 자동 변환
+SELECT last_name, salary FROM employees WHERE salary > '10000';
+-- King	24000
+-- Yang	17000
+
+-- ORA-01722: 수치가 부적합합니다
+SELECT last_name, salary FROM employees WHERE salary > '$10,000';
+
+-- 숫자였던 salary가 문자로 암시적 데이터 유형 변환(자동 형 변환). TO_CHAR 안썼음.
+SELECT employee_id, LPAD(salary, 10, '*')
+FROM employees
+WHERE department_id = 90;
+
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-mm-dd hh24:mi:ss') FROM dual;
+
+SELECT sysdate, systimestamp FROM dual;
+-- 25/07/15	25/07/15 10:36:17.406000000 +09:00
+
+-- 2/24 2시간 후
+SELECT sysdate, TO_CHAR(sysdate + 2/24, 'yyyy-mm-dd hh24:mi:ss') FROM dual;
+-- 25/07/15	2025-07-15 12:37:53
+
+-- 30/(24*60) : 30분후, -- 30/(24*60*60) : 30초후
+SELECT sysdate, TO_CHAR(sysdate + 30/(24*60), 'yyyy-mm-dd hh24:mi:ss') FROM dual;
+-- 25/07/15	2025-07-15 11:08:17
+
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-month-dd hh24:mi:ss') FROM dual;
+-- 25/07/15	2025-7월 -15 10:38:50
+
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-Month-dd hh24:mi:ss') FROM dual;
+-- 25/07/15	2025-7월 -15 10:39:16
+
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-MONTH-dd hh24:mi:ss') FROM dual;
+-- 25/07/15	2025-7월 -15 10:39:35
+
+-- 오전 오후 표시 : am 또는 pm 둘 중 하나 상관없음
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-MONTH-dd hh24:mi:ss pm') FROM dual;
+
+-- 요일 day : 화요일
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-MONTH-dd hh24:mi:ss day') FROM dual;
+
+-- 요일 dy : 화
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-MONTH-dd hh24:mi:ss dy') FROM dual;
+
+-- w: week
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-MONTH-dd hh24:mi:ss w') FROM dual;
+
+-- 년 중 몇주차
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-MONTH-dd hh24:mi:ss ww') FROM dual;
+
+-- 분기
+SELECT sysdate, TO_CHAR(sysdate, 'yyyy-MONTH-dd hh24:mi:ss q') FROM dual;
+
+SELECT employee_id, last_name, hire_date,
+       TO_CHAR(hire_date, 'yyyy-mm-dd hh24:mi:ss') 입사연월일,
+       TO_CHAR(hire_date, 'yyyy') 입사연도,
+       TO_CHAR(hire_date, 'mm') 입사월,
+       TO_CHAR(hire_date, 'q') 입사분기
+FROM employees;
+-- 100	King	13/06/17	2013-06-17 00:00:00	2013	06	2
+-- 101	Yang	15/09/21	2015-09-21 00:00:00	2015	09	3
+--> 날짜만 입력하면, 시간이 00:00:00 로 된다.
+
+-- EXTRACT : 문자로 변환 안함
+-- TO_CHAR : 문자로 변환
+
+SELECT employee_id, last_name, salary,
+       TO_CHAR(salary, '$999,999.99') SALARY
+FROM employees;
+-- 100	King	24000	  $24,000.00
+-- 101	Yang	17000	  $17,000.00
+
+SELECT employee_id, last_name, salary,
+       TO_CHAR(salary, '$099,999.99') SALARY
+FROM employees;
+-- 100	King	24000	 $024,000.00
+-- 101	Yang	17000	 $017,000.00
+
+-- L : Local : 클라이언트의 지역 통화기호
+SELECT employee_id, last_name, salary,
+       TO_CHAR(salary, 'L99,999') SALARY
+FROM employees;
+-- 100	King	24000	        ￦24,000
+-- 101	Yang	17000	        ￦17,000
+
+-- 지역 바꾸기 : 통화 기호, 날짜 형식이 달라짐
+-- 이 창에서만 유효
+ALTER SESSION SET nls_territory = 'Japan';
+
+SELECT employee_id, last_name, salary,
+       TO_CHAR(salary, 'L99,999') SALARY
+FROM employees;
+-- 100	King	24000	         ¥24,000
+-- 101	Yang	17000	         ¥17,000
+
+ALTER SESSION SET nls_territory = 'Korea';
+
+SELECT last_name, salary FROM employees WHERE salary > TO_NUMBER('$10,000', '$99,999');
+-- King	24000
+-- Yang	17000
+
+SELECT last_name, hire_date FROM employees
+WHERE hire_date > '01-01-2017';
+-- ORA-01830: 날짜 형식의 지정에 불필요한 데이터가 포함되어 있습니다
+
+SELECT last_name, hire_date FROM employees
+WHERE hire_date > TO_DATE('01-01-2017', 'dd-mm-yyyy');
+-- Miller	17/05/21
+-- Nguyen	17/02/07
+
+SELECT last_name, hire_date FROM employees
+WHERE hire_date > TO_DATE('01-01-17', 'dd-mm-yy');
+-- Miller	17/05/21
+-- Nguyen	17/02/07
+
+SELECT last_name, hire_date FROM employees
+WHERE hire_date > TO_DATE('01-01-99', 'dd-mm-yy');
+-- 아무도 안나옴 ?
+
+-- rr 쓰면 나옴.
+-- yy 는 오늘 날짜와 동일한 세기를 사용한다. 그러므로, 99는 2099년이 되어 버린다.
+-- 현재 세기에 이전 세기 데이터를 볼 때 문제 생김.
+-- rr 는 현재 세기가 2049년 될때까지 적용됨. 한 세기 전까지 보여줌.
+SELECT last_name, hire_date FROM employees
+WHERE hire_date > TO_DATE('01-01-99', 'dd-mm-rr');
+-- King	13/06/17
+-- Yang	15/09/21
+
+-- commission_pct is null 인 경우 0 으로 치환
+SELECT employee_id, last_name, salary, commission_pct, NVL(commission_pct, 0)
+FROM employees;
+-- 144	Vargas	2500		0
+-- 145	Singh	14000	0.4	0.4
+
+SELECT employee_id, last_name, salary, commission_pct, salary*12 + salary*commission_pct
+FROM employees;
+-- 144	Vargas	2500		
+-- 145	Singh	14000	0.4	173600
+--> (문제) 영업 사원이 아닌 경우 0 이 나옴.
+
+SELECT employee_id, last_name, salary, commission_pct, salary*12 + NVL(salary*commission_pct, 0)
+FROM employees;
+-- 144	Vargas	2500		30000
+-- 145	Singh	14000	0.4	173600
+
+SELECT employee_id, last_name, manager_id, department_id
+FROM employees;
+-- 100	King	(null)	90
+-- 101	Yang	100	90
+-- 178	Grant	149	(null)
+-- 179	Johnson	149	80
+
+SELECT employee_id, last_name,
+       NVL(manager_id, 'No Manager'),
+       NVL(department_id, 'Not Yet')
+FROM employees;
+-- ORA-01722: 수치가 부적합합니다
+-- manager_id 는 숫자인데, 'No Manager'는 문자
+
+DESC employees
+-- MANAGER_ID              NUMBER(6)    
+-- DEPARTMENT_ID           NUMBER(4)  
+
+-- NVL(manager_id, 'No Manager') 에서 manager_id 를 문자로 만들면 된다. 그러면 ORA-01722 에러 안남.
+SELECT employee_id, last_name,
+       NVL(TO_CHAR(manager_id), 'No Manager'),
+       NVL(TO_CHAR(department_id), 'Not Yet')
+FROM employees;
+-- 100	King	No Manager	90
+-- 101	Yang	100	90
+-- 178	Grant	149	Not Yet
+-- 179	Johnson	149	80
+
+-- 연봉만 봄: salary, commission_pct 제외 --> 이 사람은 커미션을 받는 사람일까?
+SELECT employee_id, last_name, salary*12 + NVL(commission_pct, 0)
+FROM employees;
+
+-- NVL2(commission_pct, 'Yes', 'No') 함수는 두번째 3번째 인수의 타입만 같으면 된다.
+SELECT employee_id, last_name, salary*12 + NVL(commission_pct, 0) AS 연봉,
+       NVL2(commission_pct, 'Yes', 'No') 비고
+FROM employees;
+
+-- 인수 중 NULL 아닌 첫번째 요소 반환
+SELECT employee_id, last_name, manager_id, commission_pct, manager_id, salary,
+       COALESCE(commission_pct, manager_id, salary)
+FROM employees;
+/*
+100	King				24000	24000
+101	Yang	100		100	17000	100
+(중략)
+145	Singh	100	0.4	100	14000	0.4
+*/
+
+-- 상수 적어도 됨.
+SELECT employee_id, last_name, manager_id, commission_pct, manager_id, salary,
+       COALESCE(commission_pct, manager_id, 1111)
+FROM employees;
+-- 100	King				24000	1111
+
+SELECT last_name, job_id, salary,
+       CASE job_id WHEN 'IT_PROG' THEN 1.10*salary
+                   WHEN 'ST_CLERK' THEN 1.15*salary
+                   WHEN 'SA_REP' THEN 1.20*salary
+                   ELSE salary
+       END "REVISED_SALARY"
+FROM employees;
+/*
+Garcia	AD_VP	17000	17000
+James	IT_PROG	9000	9900
+Nayer	ST_CLERK	3200	3680
+Tucker	SA_REP	10000	12000
+*/
+
+SELECT last_name, job_id, salary,
+       CASE job_id WHEN 'IT_PROG' THEN 1.10*salary
+                   WHEN 'ST_CLERK' THEN 1.15*salary
+                   WHEN 'SA_REP' THEN 1.20*salary
+                   -- ELSE salary
+       END "REVISED_SALARY"
+FROM employees;
+/* 조건에 없는 건 (null)
+King	AD_PRES	24000	
+Yang	AD_VP	17000	
+Garcia	AD_VP	17000	
+James	IT_PROG	9000	9900
+*/
+
+SELECT last_name, job_id, salary,
+       DECODE(job_id, 'IT_PROG', 1.10*salary,
+                      'ST_CLERK', 1.15*salary,
+                      'SA_REP', 1.20*salary,
+                      salary) "REVISED_SALARY"
+FROM employees;
+-- 결과 차이 없음
+
+-- WHEN 에 조건식이 있는 건, DECODE로 변경 불가
+SELECT last_name, job_id, salary,
+       CASE WHEN salary > 9000 THEN 'A'
+            WHEN salary BETWEEN 4000 AND 9000 THEN 'B'
+            ELSE 'C'
+       END AS "급여등급"
+FROM employees;
+
+
+SELECT employee_id, last_name,
+       salary*12 + NVL(commission_pct, 0) AS 연봉,
+       NVL2(commission_pct, 'Yes', 'No') 비고
+FROM employees;
+--> CASE 문으로 변경
+SELECT employee_id, last_name,
+       salary*12 + NVL(commission_pct, 0) AS 연봉,
+       CASE WHEN commission_pct IS NOT NULL THEN 'Yes' ELSE 'No' END AS 비고
+FROM employees;
+
