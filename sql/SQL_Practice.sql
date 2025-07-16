@@ -417,8 +417,13 @@ GROUP BY e.employee_id, e.last_name, e.department_id;
 SELECT last_name, salary
 FROM   employees e
 WHERE  3 > (SELECT COUNT(*)
-              FROM employees
-             WHERE e.salary < salary);
+            FROM   employees
+            WHERE  e.salary < salary);
+/*
+King	24000
+Yang	17000
+Garcia	17000
+*/
 
 12. California 주에서 근무하는 사원의 사원 ID와 이름을 표시하는 질의를 작성하시오. 
 SELECT employee_id, last_name
@@ -428,6 +433,53 @@ WHERE ((SELECT location_id
         WHERE e.department_id = d.department_id ) IN   (SELECT location_id
 FROM locations l
                                                         WHERE STATE_province = 'California'));
+/*
+120	Weiss
+121	Fripp
+122	Kaufling
+123	Vollman
+124	Mourgos
+125	Nayer
+126	Mikkilineni
+127	Landry
+128	Markle
+129	Bissot
+130	Atkinson
+131	Marlow
+132	Olson
+133	Mallin
+134	Rogers
+135	Gee
+136	Philtanker
+137	Ladwig
+138	Stiles
+139	Seo
+140	Patel
+141	Rajs
+142	Davies
+143	Matos
+144	Vargas
+180	Taylor
+181	Fleaur
+182	Sullivan
+183	Geoni
+184	Sarchand
+185	Bull
+186	Dellinger
+187	Cabrio
+188	Chung
+189	Dilly
+190	Venzl
+191	Perkins
+192	Bell
+193	Everett
+194	McLeod
+195	Jones
+196	Walsh
+197	Feeney
+198	OConnell
+199	Grant
+*/
 
 13. 해당 업무의 최고 급여가 회사 전체의 업무별 최고 급여 중에서 상위 50% 안에 드는 업무ID를 표시하는 질의를 작성하시오. WITH 절을 사용하여 작성하고 쿼리블록 이름은 MAX_SAL_CALC로 지정하시오.
        WITH 
@@ -440,4 +492,13 @@ FROM locations l
        FROM MAX_SAL_CALC
        WHERE job_total > (SELECT MAX(job_total) * 1/2
                           FROM MAX_SAL_CALC)
-       ORDER BY job_total DESC; 
+       ORDER BY job_total DESC;
+/*
+President	24000
+Administration Vice President	17000
+Sales Manager	14000
+Marketing Manager	13000
+Accounting Manager	12008
+Finance Manager	12008
+*/
+
