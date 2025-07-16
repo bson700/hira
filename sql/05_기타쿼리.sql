@@ -161,3 +161,186 @@ CONNECT BY PRIOR employee_id = manager_id;
 104	Miller	103
 (후략)
 */
+
+/*
+START WITH : 검색을 시작할 위치. 트리를 검색하는 시작점을 결정. 트리의 루트로 사용될.
+CONNECT BY : 검색의 방향 결정: 탑다운, 바텀업
+
+탑다운 : 자신의 이전(PRIOR) 행이 상사
+*/
+
+-- 2025-07-16
+
+-- King 이 2개 나온다 -> START WITH 를 잘 지정해야 한다.
+SELECT employee_id, first_name, last_name, manager_id
+FROM employees
+START WITH last_name = 'King'
+CONNECT BY PRIOR employee_id = manager_id ;
+
+-- employee_id 는 PK
+SELECT employee_id, first_name, last_name, manager_id
+FROM employees
+START WITH employee_id = 100
+CONNECT BY PRIOR employee_id = manager_id ;
+
+-- manager_id 가 없는 사람을 사장으로 하겠다.
+SELECT employee_id, first_name, last_name, manager_id
+FROM employees
+START WITH manager_id IS NULL
+CONNECT BY PRIOR employee_id = manager_id ;
+
+-- BOTTOM-UP
+-- 이전 행의 매니저 번호가 현재 행의 사원 번호
+SELECT employee_id, first_name, last_name, manager_id
+FROM employees
+START WITH employee_id = 143
+CONNECT BY employee_id = PRIOR manager_id ;
+/*
+143	Randall	Matos	124
+124	Kevin	Mourgos	100
+100	Steven	King	
+*/
+
+/*
+Level 의사열(Pseudo Column)
+오라클이 내부적으로 구현해 놓은 보이지 않는 컬럼으로 SELECT 절에 쓰면 나타남. DESC 명령에서는 안나옴.
+
+rounum : 오라클이 행을 배치해준 순서
+rowid : 실제 행의 위치를 나타내는 값
+level --> 계층쿼리에서만 사용 가능
+*/
+
+SELECT employee_id, last_name, rowid FROM employees;
+
+/*
+ROWID
+000000FFFBBBBBBRRR
+객체번호, 파일번호, 블록 ID, 행번호
+
+data dictionary = catalog
+
+파일번호: UNDOTBS01.DBF 파일의 번호
+
+DB블록 한블록당 8K
+
+
+
+*/
+
+-- OBJECT_ID 확인
+DESC user_objects
+/*
+이름                널? 유형            
+----------------- -- ------------- 
+OBJECT_NAME          VARCHAR2(128) 
+SUBOBJECT_NAME       VARCHAR2(128) 
+OBJECT_ID            NUMBER        
+DATA_OBJECT_ID       NUMBER        
+OBJECT_TYPE          VARCHAR2(23)  
+CREATED              DATE          
+LAST_DDL_TIME        DATE          
+TIMESTAMP            VARCHAR2(19)  
+STATUS               VARCHAR2(7)   
+TEMPORARY            VARCHAR2(1)   
+GENERATED            VARCHAR2(1)   
+SECONDARY            VARCHAR2(1)   
+NAMESPACE            NUMBER        
+EDITION_NAME         VARCHAR2(128) 
+SHARING              VARCHAR2(18)  
+EDITIONABLE          VARCHAR2(1)   
+ORACLE_MAINTAINED    VARCHAR2(1)   
+APPLICATION          VARCHAR2(1)   
+DEFAULT_COLLATION    VARCHAR2(100) 
+DUPLICATED           VARCHAR2(1)   
+SHARDED              VARCHAR2(1)   
+CREATED_APPID        NUMBER        
+CREATED_VSNID        NUMBER        
+MODIFIED_APPID       NUMBER        
+MODIFIED_VSNID       NUMBER        
+*/
+
+-- EMPLOYEES 테이블의 OBJECT_ID 확인
+SELECT object_id, object_name FROM user_objects;
+/*
+73569	REGIONS
+73570	REG_ID_PK
+73571	COUNTRIES
+73572	COUNTRY_C_ID_PK
+73573	LOCATIONS
+73574	SYS_C007304
+73575	DEPARTMENTS
+73576	SYS_C007306
+73577	JOBS
+73578	SYS_C007308
+73579	EMPLOYEES
+73580	EMP_EMPID_PK
+73581	EMP_EMAIL_UK
+73582	JOB_HISTORY
+73583	JHIST_EMP_ID_ST_DATE_PK
+73584	JOB_GRADES
+*/
+
+/*
+C:\app\HIRA\product\18.0.0\oradata\XE\*.DBF 가 데이터 파일
+SYSAUX01.DBF -> 시스템꺼
+SYSTEM01.DBF -> 시스템꺼
+TEMP01.DBF -> 시스템꺼
+UNDOTBS01.DBF -> 내꺼
+*/
+
+/*
+DB블록 한블록당 8K
+블록번호가 같은 건 한 블록에 있음
+*/
+
+DESC DEPARTMENTS
+/*
+이름              널?       유형           
+--------------- -------- ------------ 
+DEPARTMENT_ID   NOT NULL NUMBER(4)    
+DEPARTMENT_NAME NOT NULL VARCHAR2(30) 
+MANAGER_ID               NUMBER(6)    
+LOCATION_ID              NUMBER(4)    
+*/
+
+-- 행을 액세스하는 가정 빠른 방법
+SELECT employee_id, last_name, rowid FROM employees WHERE rowid = 'AAAR9rAAHAAAADOAAA';
+
+SELECT 'DEPT' , department_id, department_name, rowid FROM departments
+UNION ALL
+SELECT 'EMP', employee_id, last_name, rowid FROM employees
+ORDER BY ROWID;
+
+-- level 1 밑에 2, 2 밑에 3, ...
+-- level 은 계층 쿼리에서만 유효
+SELECT employee_id, first_name, last_name, manager_id, level
+FROM employees
+START WITH employee_id = 100
+CONNECT BY PRIOR employee_id = manager_id ;
+
+SELECT employee_id, first_name, last_name, manager_id, level
+FROM employees
+START WITH employee_id = 100
+CONNECT BY PRIOR employee_id = manager_id ;
+
+-- 레벨이 낮아질 수록 2칸씩 들여쓰기
+SELECT LPAD(last_name, LENGTH(last_name)+(LEVEL*2)-2,'_') AS org_chart
+FROM employees
+START WITH employee_id = 100
+CONNECT BY PRIOR employee_id=manager_id;
+
+-- SYS_CONNECT_BY_PATH : 경로를 보여줌
+-- CONNECT_BY_ROOT : 루트가 뭔지 표시해줌
+
+-- FROM 절 아래에 WHERE 절을 써서 특정 사원에 대한 정보를 제외
+SELECT LPAD(last_name, LENGTH(last_name)+(LEVEL*2)-2,'_') AS org_chart
+FROM employees
+WHERE employee_id <> 101
+START WITH employee_id = 100
+CONNECT BY PRIOR employee_id=manager_id;
+
+SELECT LPAD(last_name, LENGTH(last_name)+(LEVEL*2)-2,'_') AS org_chart
+FROM employees
+START WITH employee_id = 100
+CONNECT BY PRIOR employee_id=manager_id
+AND employee_id <> 101;
