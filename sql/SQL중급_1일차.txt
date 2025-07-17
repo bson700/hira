@@ -1,0 +1,221 @@
+https://github.com/my-ciel/SQL_Labs/blob/main/SQL/Query_Practice.sql
+\\30.100.1.78
+
+
+## Oracle 기존 설치 여부 확인
+>sqlplus / as sysdba
+
+
+## Oracle Editions
+- Enterprise
+- Standard
+- Express (19버전은 제공 안함)
+
+Edition별 기능 상 차이점도 존재
+
+개인 사용자가 학습을 목적으로 Enterprise Edition을 설치해도 됨.
+
+
+## Oracle Editions
+
+우리나라는 Oracle 7 버전부터 들어옴
+
+- 7
+- 8i, 9i: internet
+- 10g, 11g: grid(레이더 좌표값)
+- 12c: cloud
+
+
+## 설치 Oracle Database 18C Express Edition
+파일: OracleXE184_Win64.zip
+설치: '관리자 모드'(★)로 Setup.exe 실행
+설치 위치: (기본값) C:\app\<Username>\product\18.0.0\
+암호: oracle (SYS, SYSTEM, PDBADMIN 계정에 사용)
+대상 폴더: C:\app\<Username>\product\18.0.0\
+Oracle 홈: C:\app\<Username>\product\18.0.0\dbhomeXE
+Oracle 기본 위치: C:\app\<Username>\product\18.0.0\
+다중 테넌트 컨테이너 데이터베이스: localhost:1521
+플러그인할 수 있는 데이터베이스: localhost:1521/XEPDB1
+EM Express URL: https://localhost:5500/em
+
+
+## 설치 삭제
+1. '프로그램 추가/제거' 에서 Oracle 설치 삭제
+2. C:\Program Files\Oracle 삭제
+3. C:\ProgramData\Oracle 삭제
+4. C:\app 삭제
+5. 레지스트리 HKEY_LOCAL_MACHINE\SOFTWARE\ORACLE 삭제
+6. 레지스트리 HKEY_LOCAL_MACHINE\SOFTWARE\ORACLE 삭제
+7. 레지스트리 HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\Oracle* (5개) 삭제
+
+## 설치 SQL Developer
+sqldeveloper-24.3.1.347.1826-x64
+압축만 해제하면 됨.
+
+## 새로 만들기 > 데이터베이스 접속
+Name: 관리자
+사용자 이름: sys
+롤: SYSDBA
+비밀번호: oracle
+비밀번호 저장: 체크
+
+## C:\human_resources\hr_install.sql
+cmd.exe
+>sqlplus / as sysdba
+SQL> show user
+USER은 "SYS"입니다
+SQL> @C:\human_resources\hr_install.sql
+
+## SQL 명령문
+* DML (데이터 조작어 : 테이블이 있어야 수행 가능)
+  - SELECT
+  - INSERT
+  - UPDATE
+  - DELETE
+  - MERGE (INSERT + UPDATE)
+* DDL (데이터 정의의 : 테이블 기준)
+  - CREATE
+  - ALTER (열 추가, 열 삭제, 열 정의 수정(예를 들면, 50바이트 문자열을 100바이트로 수정))
+  - DROP
+  - TRUNCATGE
+  - RENAME
+* DCL (데이터 제어어 : 권한)
+  - GRANT
+  - REVOKE
+* TCL (트랜잭션 제어어)
+  - COMMIT
+  - ROLLBACK
+
+
+## (oracle) SELECT * FROM tab;
+    (mysql) show tables;
+
+## 새로 만들기 > 데이터베이스 접속
+Name: 인사관리
+사용자 이름: c##hr
+롤: 기본값
+비밀번호: oracle
+비밀번호 저장: 체크
+
+
+## 명령문 위에서 Ctrl+Enter
+
+// 테이블 목록 출력
+SELECT * FROM tab;
+
+SELECT * FROM employees;
+
+SELECT * FROM departments;
+SELECT * FROM locations;
+SELECT * FROM countries;
+SELECT * FROM regions;
+
+SELECT * FROM jobs;
+
+// 절 단위로 라인을 바꿔주는게 보기 좋다.
+SELECT department_id, location_id
+  FROM departments;
+
+## 데이터 유형 : 문자, 숫자, 날짜, 이진
+
+## 연산 대상: 문자, 숫자, 날짜
+* 문자 연산: +, -, *, / 연산을 할 수 없음
+
+* 날짜 연산
+  - 날짜 + 상수 = 날짜
+  - 날짜 - 상수 = 날짜
+  - 날짜 - 날짜 = 숫자 : 초단위까지 계산하므로 소수점이 나올 수 있음
+  - 시간연산을 할 때는 분수 사용 : 1시간 후는 1/24(1시간)을 더함
+
+## 널 연산: null 값이 있으면, 계산 결과 null
+SELECT last_name, salary, salary, commission_pct,
+       salary * 12 + salary * commission_pct
+FROM employees;
+// commission_pct = (null) 인 경우, 5번째 컬럼 결과가 (null)
+// salary * 12 + salary * commission_pct --> 표현식(expression)
+
+## DESCRIBE employees;
+이름             널?       유형           
+-------------- -------- ------------ 
+EMPLOYEE_ID    NOT NULL NUMBER(6)    
+FIRST_NAME              VARCHAR2(20) 
+LAST_NAME      NOT NULL VARCHAR2(25) 
+EMAIL          NOT NULL VARCHAR2(25) 
+PHONE_NUMBER            VARCHAR2(20) 
+HIRE_DATE      NOT NULL DATE         
+JOB_ID         NOT NULL VARCHAR2(10) 
+SALARY                  NUMBER(8,2)  
+COMMISSION_PCT          NUMBER(2,2)  
+MANAGER_ID              NUMBER(6)    
+DEPARTMENT_ID           NUMBER(4) 
+
+## Alias(별칭)
+SELECT last_name, salary, salary, commission_pct,
+       salary * 12 + salary * commission_pct AS annual_salary
+FROM employees;
+
+// AS 는 생략 가능
+SELECT last_name, salary, salary, commission_pct,
+       salary * 12 + salary * commission_pct annual_salary
+FROM employees;
+
+// DBMS 는 컬럼 이름에 없으므로, 공백 대신 언더바(_)를 사용하기도 한다.
+
+## 별칭에 대소문자나 특수문자가 들어가는 경우, 큰따옴표(" ")로 묶어준다.
+
+## 별칭에 한글이름도 가능
+SELECT last_name, salary, salary, commission_pct 커미션,
+       salary * 12 + salary * commission_pct AS "Annual-Salary"
+FROM employees;
+
+## 컬럼이름이 영문으로 나올때 까지의 과정
+1) 추출
+사원번호
+사원이름
+부서번호
+부서이름
+지역번호
+2) 쪼갬: 엑셀에서 최소한의 단어로 쪼갬
+사원 번호 이름
+부서 번호 이름
+지역 번호
+-> 사원 번호 부서 이름 지역
+3) 키워드를 영어로 변환 -> 도메인 사전을 만듬
+사원 employee
+부서 department
+지역 location
+번호 no
+이름 name
+4) 단어 조합
+employee_no
+employee_name
+department_no
+department_name
+location_no
+5) 용어 사전을 만듬
+
+## 연결 연산자 ||
+SELECT employee_id, first_name || ' ' || last_name AS "FullName"
+FROM employees;
+
+SELECT employee_id, first_name || ' ' || last_name || ' : ' || salary AS salary_details
+FROM employees;
+
+SELECT employee_id, first_name || ' ' || last_name || ''salary : ' || salary AS salary_details
+FROM employees;
+-> ' : pair 문자, 쌍문자 -> 쌍이 안 맞아서 오류
+
+// ' 짝 맞춰줌
+SELECT employee_id, first_name || ' ' || last_name || '''salary : ' || salary AS salary_details
+FROM employees;
+
+// 대체 인용(q) 연산자로 대체
+SELECT employee_id, first_name || ' ' || last_name || q'['salary : ]' || salary AS salary_details
+FROM employees;
+
+## DESC : 테이블의 구조 확인
+DESCRIBE employees
+DESC employees
+
+salary > 10000
+AND department_id IS NULL
