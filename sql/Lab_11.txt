@@ -1,0 +1,127 @@
+##############################################################
+# TEST 1 : 제약조건과 인덱스 
+##############################################################
+SELECT table_name, constraint_name, constraint_type
+FROM user_constraints
+WHERE table_name='EMP';
+
+SELECT table_name, index_name, uniqueness
+FROM user_indexes
+WHERE table_name='EMP';
+
+ALTER TABLE EMP
+ADD CONSTRAINT emp_id_pk PRIMARY KEY (employee_id);
+
+SELECT table_name, constraint_name, constraint_type
+FROM user_constraints
+WHERE table_name='EMP';
+
+SELECT table_name, index_name, uniqueness
+FROM user_indexes
+WHERE table_name='EMP';
+
+
+##############################################################
+# TEST 2 : 여러유형의 인덱스 실습
+##############################################################
+1. B-Tree 인덱스
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE last_name = 'Harris';
+SELECT * FROM table(dbms_xplan.display);
+
+CREATE INDEX emp_lname_ix ON employees(last_name);
+
+EXPLAIN PLAN FOR
+SELECT * FROM employees
+WHERE last_name = 'Harriss';
+SELECT * FROM table(dbms_xplan.display);
+
+DROP INDEX emp_lname_ix;
+
+2. 조합 인덱스 예제 
+CREATE INDEX emp_name_ix ON emp(first_name, last_name);
+
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE first_name='Jackk' AND last_name = 'Harriss';
+SELECT * FROM table(dbms_xplan.display);
+
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE first_name='Harriss';
+SELECT * FROM table(dbms_xplan.display);
+
+--Index Skip Scan 확인 
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE last_name = 'Yangg';
+SELECT * FROM table(dbms_xplan.display);
+
+DROP INDEX emp_name_ix;
+
+3. 함수기반 인덱스
+CREATE INDEX emp_sal_ix ON emp(salary);
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE salary*0.9 > 12000;
+SELECT * FROM table(dbms_xplan.display);
+DROP INDEX emp_sal_ix;
+
+CREATE INDEX emp_sal_ix ON emp(salary*0.9);
+
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE salary*0.9 > 12000;
+SELECT * FROM table(dbms_xplan.display);
+
+DROP INDEX emp_sal_ix;
+
+4. 비트맵 인덱스
+ALTER TABLE emp ADD gender CHAR(1);
+UPDATE emp
+SET gender = CASE
+               WHEN DBMS_RANDOM.VALUE < 0.5 THEN 'F'
+               ELSE 'M'
+             END;
+COMMIT;
+
+SELECT DISTINCT gender from emp;
+CREATE INDEX emp_gender_ix ON emp(gender);
+
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE gender = 'F';
+SELECT * FROM table(dbms_xplan.display);
+
+EXPLAIN PLAN FOR
+SELECT gender, count(*) FROM emp
+GROUP BY gender;
+SELECT * FROM table(dbms_xplan.display);
+
+ANALYZE INDEX emp_gender_ix COMPUTE STATISTICS;
+desc user_indexes
+SELECT blevel, leaf_blocks, distinct_keys, clustering_factor
+FROM user_indexes
+WHERE index_name = 'EMP_GENDER_IX';
+
+DROP INDEX gender_ix;
+
+CREATE BITMAP INDEX emp_gender_ix ON emp(gender);
+
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE gender = 'F';
+SELECT * FROM table(dbms_xplan.display);
+
+EXPLAIN PLAN FOR
+SELECT gender, count(*) FROM emp
+GROUP BY gender;
+SELECT * FROM table(dbms_xplan.display);
+
+ANALYZE INDEX emp_gender_ix COMPUTE STATISTICS;
+SELECT blevel, leaf_blocks, distinct_keys, clustering_factor
+FROM user_indexes
+WHERE index_name = 'EMP_GENDER_IX';
+
+DROP INDEX emp_gender_ix;

@@ -1,0 +1,238 @@
+##############################################################
+# TEST 1 :실습준비
+##############################################################
+DROP TABLE emp PURGE;
+DROP TABLE dept PURGE;
+
+CREATE TABLE emp AS SELECT * FROM employees;
+CREATE TABLE dept AS SELECT * FROM departments;
+
+BEGIN
+  FOR i IN 1..10 LOOP
+  INSERT INTO emp
+  SELECT * FROM emp;
+  END LOOP;
+  UPDATE emp 
+  SET employee_id = rownum;
+  UPDATE emp
+  SET first_name = first_name ||
+                 SUBSTR('abcdefghijklmnopqrstuvwxyz', TRUNC(DBMS_RANDOM.VALUE(1, 27)), 1),
+      last_name  = last_name ||
+                 SUBSTR('abcdefghijklmnopqrstuvwxyz', TRUNC(DBMS_RANDOM.VALUE(1, 27)), 1),
+      email      = email ||
+                 SUBSTR('ABCDEFGHIJKLMNOPQRSTUVWXYZ', TRUNC(DBMS_RANDOM.VALUE(1, 27)), 1);
+  COMMIT;
+  END;
+/
+
+SELECT COUNT(*), MIN(employee_id), MAX(employee_id) 
+FROM emp;
+
+###################################################################################### 
+# TEST 2 : Optimizer Mode와 실행계획 
+###################################################################################### 
+1. 현재 Optimizer Mode의 설정값을 확인합니다. 초기 값은 ALL_ROWS 입니다.
+show parameter optimizer_mode 
+
+2. 다음 명령문의 실행계획을 확인합니다. 
+ALTER SYSTEM FLUSH shared_pool;
+
+EXPLAIN PLAN FOR
+SELECT *
+FROM   emp e JOIN departments d
+ON  (e.department_id = d.department_id)
+AND e.email='SSTILESS' OR d.department_name='Treasury';
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+3. Optimizer Mode를 세션레벨에서 FIRST_ROWS_1로 변경합니다.
+ALTER SYSTEM SET optimizer_mode=first_rows_1;
+
+ALTER SYSTEM FLUSH shared_pool;
+
+EXPLAIN PLAN FOR
+SELECT *
+FROM   emp e JOIN departments d
+ON  (e.department_id = d.department_id)
+AND e.email='SSTILESS' OR d.department_name='Treasury';
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+###################################################################################### 
+# TEST 3 : 객체 통계 관리 TEST 
+###################################################################################### 
+1. 다음 명령으로 객체통계를 조회해 봅니다.
+SELECT table_name, num_rows, blocks, empty_blocks, 
+       TO_CHAR(last_analyzed,'yy/mm/dd hh24:mi:ss') last_analyzed
+FROM user_tables;
+
+2. 만약 통계데이터가 있다면 다음을 실행하여 모든 통계를 삭제합니다.
+EXEC dbms_stats.delete_schema_stats('c##hr');
+SELECT table_name, num_rows, blocks, empty_blocks, 
+       TO_CHAR(last_analyzed,'yy/mm/dd hh24:mi:ss') last_analyzed
+FROM user_tables;
+
+3. ANALYZE 명령으로 개별 객체의 통계를 관리합니다. 
+ANALYZE TABLE emp COMPUTE STATISTICS;
+SELECT table_name, num_rows, blocks, empty_blocks, 
+       TO_CHAR(last_analyzed,'yy/mm/dd hh24:mi:ss') last_analyzed
+FROM user_tables;
+ANALYZE TABLE emp DELETE STATISTICS;
+
+4. DBMS_STATS로 개별 테이블의 객체 통계를 관리합니다.
+EXEC dbms_stats.gather_table_stats('c##hr','emp');
+SELECT table_name, num_rows, blocks, empty_blocks, 
+       TO_CHAR(last_analyzed,'yy/mm/dd hh24:mi:ss') last_analyzed
+FROM user_tables;
+EXEC dbms_stats.delete_table_stats('c##hr','emp');
+
+5. DBMS_STATS로 스키마의 모든 객체의 통계를 생성합니다.
+EXEC dbms_stats.gather_schema_stats('c##hr');
+SELECT table_name, num_rows, blocks, empty_blocks, 
+       TO_CHAR(last_analyzed,'yy/mm/dd hh24:mi:ss') last_analyzed
+FROM user_tables;
+
+###################################################################################### 
+# TEST 4 : SQL 진단 도구 1
+###################################################################################### 
+
+1. EXPLAIN PLAN FOR 실행 후 Plan_table을 조회합니다. 
+EXPLAIN PLAN FOR
+SELECT employee_id, last_name, first_name, department_name 
+from emp e JOIN departments d 
+ON e.department_id = d.department_id 
+and last_name like 'T%' 
+ORDER BY last_name;
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+2. V$SQL과 V$SQL_PLAN 뷰를 활용하여 최근에 실행된 커서에 대한 실행 계획을 검사해 봅니다. 
+SELECT employee_id, last_name, first_name, department_name 
+from emp e JOIN departments d 
+ON e.department_id = d.department_id 
+and last_name like 'T%' 
+ORDER BY last_name;
+
+SELECT sql_text, hash_value, address
+FROM v$sql
+WHERE sql_text LIKE 'SELECT employee_id%' ; --> hash_value와 address 메모
+
+SELECT id
+     , lpad (' ', depth) || operation operation
+     , options , object_name , optimizer , cost
+FROM V$SQL_PLAN
+WHERE hash_value = 1700806449
+AND address    = '00007FF9A7402188'
+START WITH id = 0
+CONNECT BY
+       (     prior id           = parent_id
+         AND prior hash_value   = hash_value
+         AND prior child_number = child_number
+       )
+ORDER SIBLINGS BY id, position;
+
+3. SQLPlus Autotrace
+--CMD에서 sqlplus c##hr/oracle실행
+
+set autotrace traceonly
+SELECT *
+FROM   emp e JOIN departments d
+ON  (e.department_id = d.department_id)
+AND e.email='SSTILESS' OR d.department_name='Treasury';
+
+###################################################################################### 
+# TEST 5 : SQL 진단 도구 2
+###################################################################################### 
+1. 추적파일이 생성될 경로와 이름을 다음 쿼리로 알아봅니다.
+SELECT value FROM v$diag_info
+WHERE name = 'Default Trace File';
+
+2. 1에서 확인된 경로로 이동하여 모든 파일을 삭제합니다.
+
+3. SQL Developer를 종료 후 재접속 합니다.
+
+4. 다음과 같이 SQL_TRACE를 세션레벨에서 활성화하고 SQL 명령을 실행합니다.
+
+show parameter sql_trace
+ALTER SESSION SET sql_trace=TRUE;
+
+ALTER SYSTEM FLUSH shared_pool;
+ALTER SYSTEM FLUSH buffer_cache;
+
+SELECT employee_id, last_name, department_name
+FROM emp JOIN departments
+USING (department_id);
+
+ALTER SESSION SET sql_trace=FALSE;
+
+5. 탐색기에서 추적파일이 생성된 해당 경로로 이동 후 터미널에서 다음을 실행합니다. 
+
+tkprof xe_ora_34392.trc mytrc.txt sys=no waits=yes
+
+mytrc.txt 파일을 확인합니다.
+
+###################################################################################### 
+# TEST 6 : 통계와 실행계획 
+###################################################################################### 
+테이블 통계 유무에 따른 실행계획과 Cost를 비교해봅니다. 
+
+1. emp 테이블의 통계를 삭제한 후 쿼리의 실행계획을 확인합니다.
+ANALYZE TABLE emp delete STATISTICS;
+
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE employee_id = 12345;
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+2. emp 테이블의 통계 생성 후 다시 쿼리의 실행계획을 확인합니다.
+
+ANALYZE TABLE emp COMPUTE STATISTICS;
+
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE employee_id = 23451;
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+###################################################################### 
+# TEST 7 : 옵티마이저 힌트TEST
+######################################################################
+1. /*+ INDEX(e EMP_EMAIL_IX) */
+옵티마이저에게 employees 테이블에서 EMP_EMAIL_IX 인덱스를 사용하도록 지시하는 힌트입니다. email 컬럼에 조건이 있으므로 해당 인덱스를 사용하면 빠르게 탐색할 수 있습니다. 인덱스를 명시적으로 지정해 실행계획을 유도합니다.
+
+SELECT /*+ INDEX(e EMP_EMAIL_IX) */
+       e.first_name, e.email
+FROM   emp e
+WHERE  e.email = 'SKING';
+
+2. /*+ USE_NL(e d) */
+옵티마이저에게 employees와 departments 테이블 간의 조인을 Nested Loops 방식으로 수행하라고 지시하는 힌트입니다. 드라이빙 테이블의 결과 수가 적고, 조인 조건 컬럼에 인덱스가 있다면 효율적인 조인 방식이 될 수 있습니다.
+SELECT /*+ USE_NL(e d) */
+       e.employee_id, e.first_name, d.department_name
+FROM   emp e
+JOIN   departments d
+ON     e.department_id = d.department_id;
+
+3. /*+ FULL(e) */
+옵티마이저에게 employees 테이블에 대해 인덱스를 무시하고 Full Table Scan을 수행하도록 지시하는 힌트입니다. 조건에 해당하는 레코드가 많거나 인덱스 사용이 오히려 비효율적인 경우 유리합니다.
+SELECT /*+ FULL(e) */
+       e.employee_id, e.salary
+FROM   emp e
+WHERE  e.salary > 10000;
+
+4. 옵티마이저 모드 관련 힌트
+
+--옵티마이저에게 전체 쿼리 처리의 효율성을 극대화하는 실행계획을 선택하라고 지시합니다. 대용량 데이터를 배치 처리하거나 전체 결과를 빠르게 생성하는 것이 중요할 때 유리합니다. 
+
+SELECT /*+ ALL_ROWS */
+       e.employee_id, e.salary
+FROM   emp e
+WHERE  e.department_id = 50;
+
+--처음 n개의 행을 가장 빠르게 반환하는 실행계획을 선택하라는 지시입니다. 인터랙티브한 애플리케이션에서 사용자에게 빠른 응답을 제공하고자 할 때 유용하며, 옵티마이저는 빠른 접근 경로를 우선 고려합니다.
+
+SELECT /*+ FIRST_ROWS(10) */
+       e.employee_id, e.first_name
+FROM   emp e
+WHERE  e.department_id = 50;

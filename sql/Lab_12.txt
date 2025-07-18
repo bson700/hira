@@ -1,0 +1,55 @@
+EXEC dbms_stats.gather_schema_stats('c##hr');
+##############################################################
+# TEST 1 : NULL과 인덱스
+##############################################################
+1. EMP 테이블의 인덱스화된 열을 조회합니다.
+SELECT i.index_name, c.column_name, c.column_position
+FROM user_indexes i JOIN user_ind_columns c
+USING (table_name)
+WHERE table_name = 'EMP';
+
+2. department_id 열에 인덱스를 생성합니다.
+SELECT distinct department_id FROM emp;
+CREATE INDEX emp_deptid_ix ON emp(department_id);
+
+3. 다음 두 쿼리의 실행계획을 확인합니다.
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE department_id = 30;
+SELECT * FROM table(dbms_xplan.display);
+
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+WHERE department_id != 30;
+SELECT * FROM table(dbms_xplan.display);
+
+--두 번째 쿼리는 널값도 고려해야 하므로 풀테이블 스켄이 발생
+
+DROP INDEX emp_deptid_ix;
+##############################################################
+# TEST 2 : INDEX UNIQUE SCAN과 INDEX RANGE SCAN
+##############################################################
+EXPLAIN PLAN FOR
+SELECT employee_id, first_name, salary FROM emp
+WHERE employee_id = 103;
+SELECT * FROM table(dbms_xplan.display);
+
+EXPLAIN PLAN FOR
+SELECT employee_id, first_name, salary FROM emp
+WHERE employee_id BETWEEN 100 AND 120;
+SELECT * FROM table(dbms_xplan.display);
+
+##############################################################
+# TEST 3 : INDEX FULL SCAN vs INDEX FFS(INDEX FAST FULL SCAN)
+##############################################################
+1. 다음 명령은 INDEX FULL SCAN이 발생합니다. 
+EXPLAIN PLAN FOR
+SELECT * FROM emp
+ORDER BY employee_id;
+SELECT * FROM table(dbms_xplan.display);
+
+2. 다음 명령은 INDEX FAST FULL SCAN이 발생합니다. 
+CREATE INDEX emp_name_ix on emp(first_name, last_name);
+EXPLAIN PLAN FOR
+SELECT first_name, last_name from emp;
+SELECT * FROM table(dbms_xplan.display);

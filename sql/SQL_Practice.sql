@@ -482,17 +482,17 @@ FROM locations l
 */
 
 13. 해당 업무의 최고 급여가 회사 전체의 업무별 최고 급여 중에서 상위 50% 안에 드는 업무ID를 표시하는 질의를 작성하시오. WITH 절을 사용하여 작성하고 쿼리블록 이름은 MAX_SAL_CALC로 지정하시오.
-       WITH 
-       MAX_SAL_CALC AS (
-       SELECT job_title, MAX(salary) AS job_total
-       FROM employees JOIN jobs
-       ON (employees.job_id = jobs.job_id)
-       GROUP BY job_title)
-       SELECT job_title, job_total
-       FROM MAX_SAL_CALC
-       WHERE job_total > (SELECT MAX(job_total) * 1/2
-                          FROM MAX_SAL_CALC)
-       ORDER BY job_total DESC;
+WITH 
+MAX_SAL_CALC AS (
+SELECT job_title, MAX(salary) AS job_total
+FROM employees JOIN jobs
+ON (employees.job_id = jobs.job_id)
+GROUP BY job_title)
+SELECT job_title, job_total
+FROM MAX_SAL_CALC
+WHERE job_total > (SELECT MAX(job_total) * 1/2
+                   FROM MAX_SAL_CALC)
+ORDER BY job_total DESC;
 /*
 President	24000
 Administration Vice President	17000
