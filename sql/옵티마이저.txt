@@ -1,0 +1,68 @@
+Instance
+Memory
+  SGA(System Global Area)
+    Shared Pool
+    DB Buffer Cache
+    Redo log buffer
+  Background Process
+
+Database
+DataFile     ?File    Redolog
+
+User Process
+
+-> 3가지 파일을 합친걸 Database 라고 한다.
+DB 장애가 나면, 이 3개의 파일중 하나가 깨진 상태이다.
+DB 복구시 이 파일들을 복구한다.
+
+Oracle 에서는 메모리를 Area 라고 표시한다.
+SGA와 Background Process를 합쳐서 Instance 라고 한다.
+
+
+User Process 접속하면 서버 인스턴스에 서버 프로세스가 생성되고, 이를 (         )라고 한다.
+
+SQL Processing
+https://docs.oracle.com/en/database/oracle/oracle-database/19/tgsql/sql-processing.html#GUID-B3415175-41F2-4EBB-95CF-5F8B5C39E927
+
+* SELECT 문의 처리과정
+1. sql developer 는 SQL 명령문을 전달만 한다.
+2. 서버 프로세스가 처리
+
+* 서버 프로세스가 처리 과정
+1. Parse (구문 분석) : 컴파일하고 실행할 수 있는 상태까지 만들어주는 작업
+   가. Syntax 체크
+   나. Semantic 체크 : DB 의 메타자료를 이용해서 권한이 있늕지, 객체의 존재 유무(테이블의 이름이 정확한지, 컬럼 이름이 정확한지) 체크
+   다. 컴파일
+   라. 컴파일된 코드로 실행계획을 만들고, 최적화를 수행 : 최적화된 실행계획을 만든다.
+   마. 소스트리를 만든다. -> 명령어를 실행할 순서를 만든다.
+   바. 실행계획은 경로를 만드는데, Index를 탈지, 어떤 경로로 접근하는 것이 가장 비용 효율적일지 결정.
+   --> SQL원문, 컴파일된 코드, 실행계획, 소스트리와 같은 결과물이 만들어진다. 이 4가지가 SQL CURSOR 라는 정보이다. 이것이 SQL 실행세트이다.
+   --> 같은 SQL은 똑같은 커서가 만들어질 확률이 높다.
+   사. Shared Pool에 커서를 만들어 놓음. -> 재활용한다.
+       동일한 명령문이 없어서 처음부터 파일 : 하드 파싱
+       메모리에 있는 커서 활용 : 소프트 파싱
+       명령문이 길면 커서도 크다.
+   아. (버퍼캐시) select 문의 실행은 데이터의 읽기 작업이다.
+       오라클은 설치하면 다섯번째 파일(USERS)이 우리가 쓰는 파일이다.
+       버퍼캐시는 이 데이터 파일을 캐시하는 영역이다.
+       여기에 한 블록(8K)이 통째로 올라온다.
+       Physical Read : 데이터 파일에서 읽는 거.
+       Logical Read : 버퍼캐시에서 읽는 거.
+   --> 소프트 파싱, Logical Read 를 높이자.
+
+2. Execution (실행)
+
+3. Fetch (인출)
+PGA(Private/Process/Program Global Area)
+데이터가 많을때 네트워크로 전달할 때, ....
+SELECT 만 Fetch 가 있다.
+Insert/Update/Delete 는 없다. (Parse, Execution만 있다.).
+Insert 후 입력이 잘 되었는지 확인하려면, Select 해야 보임.
+I/U/D는 Redolog 버퍼에 기록했다가, Redolog 파일에 저장한다. 장애시 복구가 목적이다.
+- 자동 리커버리: 메모리만 깨지고 디스크는 괜찮을 경우. 인스턴스에만 오류, 디스크 정상.
+- 백업: 디스크가 망가질 경우.
+
+성능 튜닝의 제일 처음 -> 메모리 튜닝(커서 재활용률, 버퍼캐시 재활용률)
+
+Optimizer는 최적화를 담당하는 엔진
+실행계획이 평소에는 안보임 
