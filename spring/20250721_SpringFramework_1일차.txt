@@ -93,8 +93,8 @@ C:\202507\ws -> workspace
 apache-tomcat-10.1.34.zip
 C:\202507\apache-tomcat-10.1.34\bin
 
-###
-Window > Preferences > 
+### Tomcat Server 환경 설정
+Window > Preferences > Server > Runtime Environments
 
 ### Dynamic Web Project 
 Dynamic Web Project 두번 만듬
