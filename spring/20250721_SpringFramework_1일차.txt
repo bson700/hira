@@ -1,0 +1,538 @@
+Spring Framework
+
+Spring 6.2.6
+
+강요천
+
+Q: 방법론은 코드로 형상화한 것은?
+A: 프레임워크
+
+프레임워크는 개발자가 아닌 회사를 위한 기술이다.
+
+Q: DB에서 중요한 건
+A: 속도
+
+Q: DB에서 쿼리의 속도의 기준점은?
+A: 3초. 3초 안에 결과가 나와야 한다.
+
+Q: 서버에서 중요한 건
+A: 가동률. 99.999 (nine five)
+
+관련기술: cloud, Load Balancing, Gateway, k8s(오케스트레이션)
+
+Q: 테이블을 만드는 기준
+A: 명사, 히스토리(동사)
+
+Q: 도메인의 데이터는 어떻게 구성되는가?
+
+직원	강의장
+직원이 강의장을 예약한다.
+
+히스토리: 등록시간, 수정시간
+
+DB 설계 -> 모델 검증
+
+Q: 검증하려면? 검증의 기준점이 되는 포인트는?
+A: 요구사항. 요구사항이 DB에 잘 기록되는지 확인.
+
+요구사항 명세서 -> 바뀌면 안됨.
+
+오픈마켓 오픈일 지연 사례 : 11.11 -> (지연) ->  5. 1
+
+600개 이상의 Table 수는 큰 규모, 그 아래는 작은 규모.
+
+우리나라 시스템의 특징은 복잡하고, 요구사항이 자주 바뀌다.
+DB를 빠르게 수정할 수 있어야...
+
+ORM: JPA, MyBatis, JDBC
+MyBatis 관련 교재: 이동국 심익찬
+
+JPA : CRUD
+MyBatis : 복잡한 함수. 생산성
+JDBC : 성공률
+
+전자정부표준프레임워크 4.x
+: 프론트(next.js), 벡엔트(spring boot: API 서버)
+
+vue2 지원 종료
+
+jQuery -> Vanilla JS
+MariaDB
+
+---
+
+### JDK 설치
+jdk-21.0.6_windows-x64_bin.exe
+
+
+회룡순대, 내고향 베트남 쌀국수
+
+
+### JDK 설치 확인
+C:\Users\HIRA>java -version
+java version "21.0.6" 2025-01-21 LTS
+Java(TM) SE Runtime Environment (build 21.0.6+8-LTS-188)
+Java HotSpot(TM) 64-Bit Server VM (build 21.0.6+8-LTS-188, mixed mode, sharing)
+
+### eclipse : 폐쇄망에서는 개발 방식이 다름
+eclipse-jee-2025-06-R-win32-x86_64.zip
+C:\202507\eclipse
+eclipse.exe
+C:\202507\ws -> workspace
+
+* 개발 가이드 문서 작성: 화면캡쳐 포함
+
+### 버전 체크
+
+사용하는 스프링 버전과 JaavEE 버전 / tomcat 버전
+
+스프링 5 - JDK 8 - 11 - Tomcat 9
+스프링 6 - JDK 17 - Tomcat 10
+
+### tomcat 설치
+apache-tomcat-10.1.34.zip
+C:\202507\apache-tomcat-10.1.34\bin
+
+###
+Window > Preferences > 
+
+### Dynamic Web Project 
+Dynamic Web Project 두번 만듬
+서버 동작 확인
+메이븐 동작 확인
+
+### web.xml 에러 해결
+1. 당
+### Window > Preferences > 
+
+
+
+JDK 인지 확인한다.
+
+### Lombok v1.18.36 설치
+eclipse 종료
+java -jar lombok.jar
+'Specify location...' 클릭: C:\202507\eclipse
+'Install / Update' 클릭
+C:\202507\eclipse\lombok.jar 파일 생성 확인
+eclipse.ini 파일 마지막 줄에서 '-javaagent:C:\202507\eclipse\lombok.jar' 확인
+
+※ jdk-21을 설치한 이유
+eclipse.ini 파일에 다음과 같이 설정되어 있음
+-Dosgi.requiredJavaVersion=21
+eclipse 가 제대로 동작하려면 jdk 21 이 필요하다.
+jdk 17을 설치하면, 이클립스 메뉴가 안 나올수 있다.
+
+### eclipse.ini 파일에서 vm 설정 변경
+-vm
+plugins/org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_21.0.7.v20250502-0916/jre/bin
+-->
+-vm
+C:\Program Files\Java\jdk-21\bin
+
+### s1 프로젝트 생성
+
+### Maven 설정
+configure > Convert to maven project
+Maven > Update project
+C:\Users\HIRA\.m2 폴더 생성 확인
+C:\Users\HIRA\.m2\repository 폴더 생성 확인
+미리 공유 받은 repository.zip 파일로 C:\Users\HIRA\.m2\repository 폴더 덮어쓰기
+
+
+### codes-20250714T014106Z-1-001 : 내일 출간되는 Spring Legacy 책 코드
+
+ch5_sp1.zip 
+C:\202507\ws\codes\ch5_sp1\sp1\pom.xml
+
+### 별도의 라이브러리 다운로드하는 위치
+/s1/src/main/webapp/WEB-INF/lib
+
+Oracle JDBC 드라이버는 maven 꺼 쓰지 말아야 한다.
+maven 에 있는 JDBC 드라이버는 최신버전 꺼 밖에 없다.
+그러므로, Oracle 개발시 JDBC 드라이버는
+pom.xml 이 아닌,
+/s1/src/main/webapp/WEB-INF/lib 에 있어야 한다.
+이 부분이 다르면, 한글이 깨질 수 있다.
+
+maven nexus (권장) : maven 레파지토리를 같은 망으로 구성해서 사용
+
+### jdk-21 설정
+프로젝트 생성 후 Build Path 를 jdk-21 로 설정한다.
+
+
+### 서버 띄우기
+1. 서버 띄우기
+2. 서버 경로 수정: Servers > 톰캣 서버 선택 > 더블클릭 > Web Moduls > Path 를 / 로 수정
+
+
+### spring 라이브러리 확인 : 이 3개의 라이브러리 버전을 맞춰야 한다.
+	<!-- https://mvnrepository.com/artifact/org.springframework/spring-core -->
+	<dependency>
+	    <groupId>org.springframework</groupId>
+	    <artifactId>spring-core</artifactId>
+	    <version>6.2.6</version>
+	</dependency>
+	
+	<dependency>
+	    <groupId>org.springframework</groupId>
+	    <artifactId>spring-context</artifactId>
+	    <version>6.2.6</version>
+	</dependency>
+	
+	<dependency>
+	    <groupId>org.springframework</groupId>
+	    <artifactId>spring-webmvc</artifactId>
+	    <version>6.2.6</version>
+	</dependency>
+
+### Spring 6 의 설정 방식
+방법 1. XML
+   - Spring 공식 사이트에는 없음
+   - 전자정부표준프레임워크에는 남아 있음
+방법 2. Java
+   - Spring 6 의 Security 설정은 XML 로 다 안됨
+
+### Weak/String Typed Language
+위크 타입드 랭기지 : Python, JavaScript
+스트롱 타입드 랭기지 : Java, TypeScript
+
+### (p.19) root-context.xml
+- 위치: C:\202507\ws\codes\ch5_sp1\sp1\src\main\webapp\WEB-INF\spring
+- 라이브러리를 추가 하면 설정이 필요하다.
+
+### /s1/src/main/webapp/WEB-INF
+- 브라우저에서 절대 접근할 수 없는 경로
+- WEB-INF 폴더는 표준이므로 어딘가에는 있다.
+- ZEUS, WebLogic 등에 따라 WEB-INF 폴더는 다를 수 있다.
+- 사용자에게 보호해야 하는 Resource 는 WEB-INF 아래에 놓는다.
+
+### Spring 과 관련된 XML 은 spring 폴더를 하나 만들어서 쓴다.
+*  xml 파일 2개 생성
+1. 웹을 위한 servlet-context.xml
+2. 자바를 위한 root-context.xml
+
+1. /s1/src/main/webapp/WEB-INF/spring/root-context.xml
+   - 자바, DB 와 관련된 설정
+2. /s1/src/main/webapp/WEB-INF/spring/servlet-context.xml
+   - 웹과 관련된 설정
+   - Spring 3 버전 부터는 root-context.xml 파일 이용
+
+C:\202507\ws\codes\ch5_sp1\sp1\src\main\webapp\WEB-INF\spring\root-context.xml
+의 상단 내용을 다음 파일로 복사
+/s1/src/main/webapp/WEB-INF/spring/root-context.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	
+  xmlns:tx="http://www.springframework.org/schema/tx"
+	
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context 
+		https://www.springframework.org/schema/context/spring-context.xsd
+    http://mybatis.org/schema/mybatis-spring 
+	  http://mybatis.org/schema/mybatis-spring.xsd 
+	  http://www.springframework.org/schema/aop 
+	  https://www.springframework.org/schema/aop/spring-aop.xsd
+	  
+	  http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd
+	  
+	  ">
+</beans>
+
+
+유사하게 servlet-context.xml 도 상단 내용을 복사 복사
+/s1/src/main/webapp/WEB-INF/spring/servlet-context.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/mvc
+		https://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/context 
+		https://www.springframework.org/schema/context/spring-context.xsd">
+
+
+</beans>
+
+확인 방법: < 누르면 뭔가 자동으로 나온다.
+
+### /s1/src/main/webapp/WEB-INF/web.xml
+- context 는 범위라고 이해한다.
+- p.23 내용 참고한다.
+
+
+<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>/WEB-INF/spring/root-context.xml</param-value>
+	</context-param>
+
+    <servlet>
+        <servlet-name>appServlet</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>/WEB-INF/spring/servlet-context.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>appServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+서버 리스타트 하고, 다음 문구 확인되면, 성공
+7월 21, 2025 2:01:58 오후 org.apache.catalina.core.ApplicationContext log
+INFO: Initializing Spring root WebApplicationContext
+7월 21, 2025 2:01:59 오후 org.apache.catalina.core.ApplicationContext log
+INFO: Initializing Spring DispatcherServlet 'appServlet'
+
+
+### DB 설치 후
+* charset, DB 시간 체크할 것
+
+SELECT NOW()
+;
+
+보통 root 계정 안주고, schema 를 만들어서 그 사람에게 권한만 준다.
+
+### springdb 생성, springdbuser 계정 생성 및 권한 설정
+p.30 확인하여 5 줄 선택
+
+CREATE DATABASE springdb;
+CREATE USER 'springdbuser'@'localhost' IDENTIFIED BY 'springdbuser';
+CREATE USER 'springdbuser'@'%' IDENTIFIED BY 'springdbuser';
+GRANT ALL PRIVILEGES ON springdb.* TO 'springdbuser'@'localhost';
+GRANT ALL PRIVILEGES ON springdb.* TO 'springdbuser'@'%';
+
+### springdb 에 springdbuser 로 로그인
+select now(); 로 시간 확인
+
+### DBA는 방화벽 확인
+
+### 진짜 개발자 vs. 가짜 개발자
+성공한 프로젝트 vs. 망한 프로젝트 
+
+### JDBC 체크
+1. 선임자에게 JDBC Driver 버전 확인
+2. 커넥션풀
+
+### 동시 접속
+tomcat 동시 접속 가능 150 ~ 200
+DB 의 연결을 10 로 잡으면, 190 명은 waiting -> F5(새로 고침)
+DB 컨넥션풀의 개수는 tomcat 이 연결할 수 있는 개수와 맞춰준다.
+* /Servers/Tomcat v10.1 Server at localhost-config/server.xml
+    <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+        maxThreads="150" minSpareThreads="4"/>
+
+### DB 연결 문제시 확인할 것 - 다른 사람과 커뮤니케이션할 때 이 문제 얘기할 것
+1. NETWORK 망 문제 - telnet 연결이 가능한지 먼저 체크
+2. PORT 문제 - 리스너 세팅 확인 / 방화벽 체크 필요
+   ORA-12541: TNS: no listener 오류
+3. 계정 / 권한 문제 : 계정의 경우 연결 불가 / 권한의 경우는 권한 없음 메시지
+
+-- 단독으로 JDBC 연결을 하는 개발 툴을 사용하는 것이다.
+DBeaver / Data Grip / Toad ...
+
+-- Web Application 과 DB 연결 설정
+   - 이를 '커넷션 풀 세팅' 이라고 함 - javax.sql.DataSource 설정
+   - 3rd party 라이브러리
+
+   - 표준처럼 사용하는 라이브러리 HikariCP
+
+   - WAS의 설정과 연동
+   - 독립 설정
+
+### 교재 24페이지
+
+/s1/src/main/resources/log4j2.xml 추가
+p26~27 내용 추가
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Configuration>
+	<!-- Appender, Layout 설정 -->
+	<Appenders>
+		<Console name="console" target="SYSTEM_OUT">
+			<PatternLayout pattern="%c %l %5p %m%n" />
+		</Console>
+	</Appenders>
+	<!-- Logger 설정 -->
+	<Loggers>
+		<Logger name="org.springframework" level="DEBUG"
+			additivity="false">
+			<AppenderRef ref="console" />
+		</Logger>
+		<Root level="INFO">
+			<AppenderRef ref="console" />
+		</Root>
+	</Loggers>
+</Configuration>
+
+--> level="DEBUG" 임을 확인
+개발할 때는 DEBUG 사용,
+운영할 때는 INFO 사용.
+
+fatal
+error
+warn
+info
+debug
+
+System.out.println 은 성능의 10%를 손해본다.
+
+/s1/src/test/resources/log4j2.xml 생성
+
+* log4j2 로그 level 변경
+/s1/src/main/resources/log4j2.xml -> level="INFO"
+/s1/src/test/resources/log4j2.xml -> level="DEBUG"
+
+### HikariCP 커넥션풀
+- 성능이 좋음
+
+- sql 로그 찍는게 중요
+
+log4jdbc : 절대 쓰지 말것. 개발이 끝난지 15년이 넘음.
+
+※ 강사님 패키지: org.zerock
+
+과제: 데이터소스의 설정 중 필요한 것들 전부 알아내기. p44에 없는 것.
+
+p.44 내용을 root-context.xml 에 넣고, 다음 로그 확인
+com.zaxxer.hikari.HikariDataSource com.zaxxer.hikari.HikariDataSource.<init>(HikariDataSource.java:79)  INFO HikariPool-1 - Starting...
+com.zaxxer.hikari.pool.HikariPool com.zaxxer.hikari.pool.HikariPool.checkFailFast(HikariPool.java:572)  INFO HikariPool-1 - Added connection org.mariadb.jdbc.Connection@25ee3cd6
+com.zaxxer.hikari.HikariDataSource com.zaxxer.hikari.HikariDataSource.<init>(HikariDataSource.java:81)  INFO HikariPool-1 - Start completed.
+
+### DB는 반드시 테스트 해야 한다. -> 어떻게
+1. DB 연결 확인
+
+
+### DBTests
+
+* /s1/src/test/java/kr/or/hira/db/DBTests.java 생성
+package kr.or.hira.db;
+
+import org.junit.jupiter.api.Test;
+
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
+public class DBTests {
+
+	@Test
+	public void test1() {
+		log.trace("test1---t-------");
+		log.debug("test1---d-------");
+		log.info("test1---i-------");
+		log.error("test1---e-------");
+		log.warn("test1---w-------");
+		log.fatal("test1---f-------");
+	}
+}
+
+* /s1/src/test/resources/log4j2.xml 에 다음 내용 추가
+<Logger name="kr.or.hira" level="TRACE"
+			additivity="false">
+			<AppenderRef ref="console" />
+		</Logger>'=
+
+
+### 47 페이지 상단
+
+다음 두 줄은 버전마다 다를 수 있다.
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration("file:src/main/webapp/WEB-INF/spring/root-context.xml")
+
+위 두 줄은 DBTests.java 에 C&P 한다.
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration("file:src/main/webapp/WEB-INF/spring/root-context.xml")
+@Log4j2
+public class DBTests {
+
+* DB 연결 테스트
+
+public class DBTests {
+
+	@Autowired
+	DataSource ds;
+
+	@Test
+	public void testConnect() {
+		try {
+			log.info(ds.getConnection());
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+
+
+* 실행하면 다음 라인이 나온다.
+kr.or.hira.db.DBTests kr.or.hira.db.DBTests.testConnect(DBTests.java:24)  INFO HikariProxyConnection@1423752095 wrapping org.mariadb.jdbc.Connection@72be135f
+
+## 빌드 후 특정 단위테스트을 하고 싶지 않을 때
+	@Disabled
+	@Test
+	public void testConnect() {
+
+
+## in-read, out-write
+
+DML: insert, update, delete
+SQL 컴파일
+
+JVM GC
+- Full GC -> 두대 서버 필요(Heartbeat 서버)
+- Minor GC
+
+네트워크 연결은 GC 의 대상이 아니다.
+그러므로, 반드시 close 해야 한다.
+
+개발자가 close 했을때, 강제로 close 할 수 있는 수단이 필요하다.
+-> MyBatis 는 강제로 close를 보장해 준다. (★)
+
+### testConnect 함수 수정
+	@Test
+	public void testConnect() {
+		// try with resource 방식
+		try(Connection con = ds.getConnection()) {
+			log.info(con);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
+-------------------------------------------------------------------------------
+< 오늘 수업 정리>
+JDK 21 세팅
+eclipse
+Tomcat
+Lombok 라이브러리 - eclipse 세팅 변경
+
+web project 생성 - Tomcat 실행 확인
+MAVEN 프로젝트 전환 - 에러 문제 확인 - repository 수정
+spring 설정 xml 추가
+web.xml 수정
+
+DB 설정
+스키마, 사용자 계정 설정
+DB 연결 확인
+
+프로젝트내 log4j2 세팅
+HikariCP 설정 및 테스트
