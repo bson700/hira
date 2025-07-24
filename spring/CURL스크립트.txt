@@ -12,6 +12,39 @@ curl -X POST -H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8"
 게시물 삭제 POST 방식 테스트 
 curl -X POST -H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8" http://localhost:8080/board/remove/33
 
+댓글 
+curl -X POST -H "Content-Type: application/json" -d '{
+  "bno": 100,
+  "replyText": "새로운 댓글입니다.",
+  "replyer": "홍길동"
+}' http://localhost:8080/replies
+
+첨부파일 
+curl -X POST -H "Content-Type: multipart/form-data" \
+  -F "title=Test" \
+  -F "content=Content" \
+  -F "writer=user00" \
+  -F "files=@/path/to/your/file1.jpg" \
+  -F "files=@/path/to/your/file2.png" \
+  http://localhost:8080/board/register
+
+create table tbl_reply (
+  rno int auto_increment primary key,
+  replytext varchar(500) not null,
+  replyer varchar(50) not null,
+  bno int not null,
+  replyDate timestamp default now(),
+  delflag boolean default false
+)
+;
+
+create index idx_reply_board on tbl_reply(bno desc, rno asc)
+;
+
+
+
+
+
 
 
 

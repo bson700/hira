@@ -144,15 +144,127 @@ list?page=3&size=30&types=TCW&keyword=44
   end : 고객용 사이트
 
 ? @Transactional 범위
-  - Critical section 만 지정
+  - 메서드에 lock을 걸고 못들어가게 할때, 클래스의 @Transactional의 역할은
   - or Nothing 은 어떻게...
 
 * p160 JSTL, tomcat 10 버전 사용시 이걸 사용
 
 * p161 <%@taglib prefix ="c" uri="http://java.sun.com/jsp/jstl/core" %> -> list.jsp
   -> 옛날 버전 썼을 때 에러남.
-  
-*
+
+---
+
+* Event 를 넣는 원칙 ★★★
+  1) 태그 내에 이벤트 걸지 말 것
+      - 예전에는 HTML main JS sub 요즘음 반대 -> DOM 과 JS 분리하라
+  2) 이벤트 위임 고려
+      - 이벤트 리스트를 링크마다 걸지 말것
+      - 풍선 타워 디펜스 게임 -> 뒤로 갈수록 느려짐 -> DOM 핸들링을 많이 하지 말라
+      - HTML4 까지: 브라우저는 HTML 뷰어 / HTML5 : 브라우저는 플랫폼
+        -> 핵심은 JS, HTML은 보조 -> JS는 타입이 약하다 -> TS(TypeScript) 출현
+      - JS는 '이벤트 루프'를 돌림 -> 사용자의 이벤트를 감지
+        -> 그러므로 개발자는 로직(함수)를 파라미터로 전달 -> 화면에 이벤트가 적어야 한다.
+        --> 이벤트는 바깥쪽 고정된 것에 걸어라.
+        --> 각각의 페이지에 이벤트를 걸지 말고, 감싸고 있는 것(구조)에 이벤트를 걸어라.
+  3) 이벤트 전파 고민
+      - 이것 때문에 원하지 않는 동작이 일어남. ex) http://localhost:8080/board/6 페이지가 안나옴
+      - a 태그는 정보를 연결하기 위한 태그이다. 이동. target을 _blank로 주면 새창이 뜸(ex. coupang)
+        -> 새 태그를 띄운 이유 -> 서버의 부하 감소
+      - preventDefault
+      - stopPropagation
+         - div A  -포함->  div B  -포함->  div C
+           : C 클릭하면, C > B > A 순으로 버블링(<-> 캡쳐링/드릴링(A > B >C))
+
+* id: 한 번 사용, class: 여러 번 사용 가능 -> class 가 유연
+
+* 		e.preventDefault();
+		e.stopPropagation();
+  -> e.stopPropagation : 버블링 캡쳐링 하는거 막는것
+  -> '페이지 번호' 클릭했을 때, 이동하지 않고, DevTools > Console에 로그만 찍혀야 함.
+
+* (기능) 조회할 때 검색 조건이 계속 유지되게 하려면.
+
+* SI 업체에서 사용하는 꼼수
+  - 조회로 이동하는거 페이지 이동하는 거 list.jsp 에서 한번에 함.
+  - <input type='hidden' name="page" value="${result.page} }">
+    -> 이동할 때 페이지 번호가 따라옴.
+
+* <tr data-bno="${board.bno}">
+  - data-bno : 3rd party 라이브러리 그래프에서 많이 사용
+  - HTML5 custom data 속성 : "data-" 로 시작. JS의 데이터를 HTML에서 표현하기 위해 사용.
+  - (작업) 클릭한 tr의 bno 추출하여 이동
+  - closest("tr") : 상위 엘리먼트들 중 가장 가까운 tr
+  - formObj.action = 
+
+* (비유) Model 은 카트(Cart)
+
+* p108
+
+* ch7 read.jsp 코드 가져와서 덮어쓰기
+   - 이 코드의 단점
+      1) 뒤로가기 해서 리스트를 본다면, OK
+      2) list 버튼을 누르면 1페이지로 간다. page 파라미터를 못쓴다. -> 이걸 쓰게 해야 한다.
+          - 쿼리스트링 정보 수집: @ModelAttribute("requestDTO") PageRequestDTO requestDTO
+          - <a href='/board/list?page=${requestDTO.page}'>
+
+※ React 라우팅 주의 : 새로고침해도 깨지지 않아야 한다.
+      
+* 지도
+  - map.naver.com
+  - tile을 특정 위치에 끼워넣는 방식
+  - 과거의 웹은 배달 / 요즘의 웹은 밀키트
+     -> 요리의 주도권이 고객임(Web 2.0), 서버는 데이터만 보내줌(XML(검사 가능), JSON)
+
+* JSON 전달 방식: REST, GraphQL
+  - RESTful 하다: 
+
+* 대규모의 웹페이지 개발위해 등장 -> angular, react, vue
+
+* com.fasterxml.jackson.core : java 객체 -> JSON
+  com.fasterxml.jackson.datatype : LocalDateTime(from Java8) 처리
+
+* (시험) DispatcherServlet ★★★
+
+* 데이터 제공 목적 -> API 서버
+
+* API 서버의 서비스 형태 2가지
+  1) 내부 서비스: React, Next.js
+      - 회사 <-> 협력사 : 전문(전자문서, 전자문서 교환)
+      - 여기어때(인천) / 야놀자(제주) / 호텔컴파인(서울) - 보험사 : 고정된 업체(클라이언트)가 있다. -> 보안 안전, 리스크 적음 (천국)
+  2) 공개 서비스
+      - User Device - 협력사(API 서버: 많은 트래픽) (지옥: 보안, 트래픽, 확장, 안정성 고려해야 함)
+  -> REST API 설계 전에 내부/공개 서비스를 고민해서 프로젝트를 시작해야 한다.
+       ->어떻게???
+
+* JWT
+  - Access Token, Refresh Token
+  - OAuth Authentication
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
+
+
+
+
+
+
 
 
 
