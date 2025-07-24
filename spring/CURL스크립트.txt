@@ -1,0 +1,17 @@
+
+게시물 등록 POST 방식 테스트 
+
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8" -d "title=Test&content=Content&writer=user00" http://localhost:8080/board/register
+
+
+게시물 수정 POST 방식 테스트 
+
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8" -d "title=Test&content=Content&writer=user00&bno=33" http://localhost:8080/board/modify/33
+
+
+게시물 삭제 POST 방식 테스트 
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8" http://localhost:8080/board/remove/33
+
+
+
+
