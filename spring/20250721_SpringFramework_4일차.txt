@@ -1,0 +1,165 @@
+4일차
+
+## AOP
+
+Proxy
+
+---
+
+@Autowired
+private TimeMapper timeMapper;
+
+log.info(timeMapper); // INFO org.apache.ibatis.binding.MapperProxy@ab20d7c
+
+//진짜 클래스의 이름
+log.info(timeMapper.getClass().getName()); // INFO jdk.proxy2.$Proxy33
+
+// instanceof 연산자로 if 체크하면 안된다.
+// timeMapper.getClass().getName() 를 사용해야 한다.
+
+---
+
+자동으로 만들어지는 것을 auto proxy 라고 한다. spring 2 부터 도입되었다.
+
+p83
+
+aspectjweaver
+aspectjrt
+
+※ 프로 요리사는 재료를 준비하고 요리한다.
+
+공통의 작업을 공통 관심사 혹은 횡단 관심사라고 한다.
+핵심로직은 아닌데 필요한 로직이다.
+예를 들면, JDBC 연결/연결해제.
+공통 관심사를 분리해 낼때 프록시 이용.
+
+① 로그 찍는거, ② 트랙잭션 설정하는 거만 알면 된다.
+
+사용자가 떠나는 반응시간 기준: 7초
+사내 기준 3초: 사내 7초여야 외부 7초
+
+* log 가 Advice
+  - Advice: Aspect에 대한 실제 구현체를 의미합니다.
+  - Target: Aspect의 적용 대상이 되는 객체
+  - Proxy: Advice + Target. Spring AOP는 자동으로 Proxy 객체를 생성할 수 있습니다
+
+* Advice: 개발자들이 만드는 코드
+  Aspect: 기능 자체
+
+/s1/src/main/java/kr/or/hira/aop/LogAdvice.java // p.87 코드
+/s1/src/main/java/kr/or/hira/service/BoardService.java
+
+	<context:component-scan
+		base-package="kr.or.hira.service"></context:component-scan>
+	<context:component-scan
+		base-package="kr.or.hira.aop"></context:component-scan>
+
+	<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+
+* 코드의 일부분을 어드바이스로 뜯어내고, 이를 어디에 적용할지 지정한다.
+
+* @Before("execution(* kr.or.hira.service.*.*(..))")
+  - 원하는 클래스, 메소드를 선택할 수 있다.
+  - Joint Point: 연결할 수 있는 관절
+  - kr.or.hira.service.*.*(..) : 이걸 Pointcut 이라고 함
+
+list?page=3&size=30&types=TCW&keyword=44
+
+* p93
+
+* kr.or.hira.aop.LogAdvice kr.or.hira.aop.LogAdvice.logTime(LogAdvice.java:43)  INFO TIME: 270
+
+* @Before : 파라미터 체크만 할때 사용하고 싶다.
+  @Around : 성능 체크할 때 사용하고 싶다.
+  -> 둘 중 하나만 사용하고 싶다.
+
+* 개발 환경 -> 테스트 환경 -> 운영 환경
+  - 테스트 DB에 운영 DB의 일부를 넣어서 테스트: 쿼리 성능 등
+  - 3~4달 운영하다가 AOP 걷어냄
+
+* 트랜잭션: All or Nothing
+
+* PG(Payment Gateway) : 카드사 연동. TOSS, KakaoPay
+  -> 이때 트랜잭션 필요
+
+* Vector DB
+  - JPA QueryDSL 대체할 수도. Like 검색 대체.
+  - 검색은 MyBatis 이용 계속
+
+* MyBatis
+  - 두 메서드를 트랜잭션 처리
+
+* p96 DataSourceTransactionManager : 시험문제 ★★★
+
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+<property name="dataSource" ref="dataSource"/>
+</bean>
+
+<tx:annotation-driven />
+
+* 트랜잭션
+  - 반정규화 이유: 성능(Join 회피). 댓글의 숫자(Join > Group by > Count 필요).
+  -> 반정규화의 경우가 트랜잭션의 대상이 될 가능성이 높다.
+
+* p96
+
+* @Transactional 는 3군데서 사용할 수 있다.
+  1) 
+  2) 
+  3) 
+
+* Annotation 클래스, 인터페이스, 메서드에 적용할 수 있다.
+
+* list 가져올때 쿼리 2번: count 가져오는 쿼리, 리스트 가져오는 쿼리
+  -> count 가져오는 쿼리를 안할 수 있다.
+
+* @Transactional(readOnly = true)
+  - JPA 할 때는 dirty checking 을 막아주므로 이득이 있다.
+  - MyBatis 에는 안해도 된다.
+
+* <if <foreach : ?
+
+* select count(bno) vs. select count(*)
+  - 일반적으로, 2번이 더 성능이 좋다.
+  - 그러나, 그때 그때 다르다.
+  - 인덱스를 타지 않고 랜덤 액세스가 빠를 때가 있다.
+  - count(bno) 는 인덱스를 뒤질 수 있으므로, 데이터가 많을 때는 성능이 더 떨어질 수 있다.
+
+* 검색 조건 재활용을 위해 sql fragment 이용
+
+* 전자정부 4부터 : spring boot, react 사용 가능
+
+* tomcat 9 jstl 과 tomcat 10 jstl 은 완전히 다르다.
+
+* service side rendering vs. client side rendering
+
+* unity 와 server side rendering
+
+* 링크 누르면
+  1) <a href 이용  -> End User는 1번
+  2) javascript 이용  -> Admin은 2번. JS 문제. 검색엔지 최적화(SEO) 문제.
+  -> 1번. 단, 강의는 2번으로 진행
+
+* admin : 관리자용 사이트
+  end : 고객용 사이트
+
+? @Transactional 범위
+  - Critical section 만 지정
+  - or Nothing 은 어떻게...
+
+* p160 JSTL, tomcat 10 버전 사용시 이걸 사용
+
+* p161 <%@taglib prefix ="c" uri="http://java.sun.com/jsp/jstl/core" %> -> list.jsp
+  -> 옛날 버전 썼을 때 에러남.
+  
+*
+
+
+
+
+
+
+
+
+
+

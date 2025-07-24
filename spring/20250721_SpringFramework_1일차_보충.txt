@@ -1,0 +1,43 @@
+
+### Tomcat Server 환경 설정
+- Window > Preferences > Server > Runtime Environments
+[그림 0010]
+
+
+### 새 프로젝트 생성
+- File > New > Dynamic Web Project
+- 마지막에 Generate web.xml deployment descriptor 체크 확인
+[그림 0020, 0030]
+
+
+### Maven 프로젝트로 변환
+1. 프로젝트 팝업 메뉴 > Configure > Convert to Maven Project
+2. 프로젝트 팝업 메뉴 > Maver > Update Project...
+
+## XML 오류해결 방법 1
+1. Window > Preferences > XML (Wile Web Developer)
+   > Download external resources like referenced DTD, XSD 체크
+[그림 0040]
+
+## XML 오류해결 방법 2
+1) 2) Window > Preferences > XML > XML Files > Validation
+   [그림 0050]
+2) Window > Preferences > XML (Wile Web Developer) > Validation & Resolution
+   > Enable validation 체크 해제
+   [그림 0060]
+
+## 프로젝트 JDK 설정 변경
+- 프로젝트 팝업 메뉴 > Java Build Path > Libraries 탭
+  > JRE System Library 선택 > Edit.. 버튼 클릭
+  > Alternate JRE: 선택 > Installed JREs... 버튼 클릭
+  > jdk-21 선택
+  > Apply and Close 버튼 클릭
+[그림 0070]
+
+## 프로젝트 실행
+- 프로젝트 팝업 메뉴 > Run As > Run on Server
+
+## 프로젝트 테스트 실행
+- 프로젝트 팝업 메뉴 > Run As > JUnit Test
+
+

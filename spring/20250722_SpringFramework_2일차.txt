@@ -1,0 +1,388 @@
+# Spring Framework 2일차
+
+
+## C++ vs. Java 
+
+* C++ 정적인 언어
+  - 컴파일 시점에 모든게 결정된다.
+
+* Java : 동적인 언어
+  - Java, 런타임에 모든걸 할 수 있다.
+  - 런타임에 클래스코드를 만들고 컴파일하고 실행할 수 있다.
+
+* 인스턴스 vs. 객체 
+- 객체: 메모리를 차지하면 객체
+- 인스턴스: 클래스 기반의 언어에서만 사용
+※ OOP(클래스 기반, 프로토타입 기반(JavaScript, ?)
+
+
+* kr.or.hira.sample.Sample1 클래스와 인스턴스 생성
+
+// Sample1.java 생략
+
+// Sample2.java 생략
+
+// Reflect.java
+public static void main(......) {
+    // 동적 클래스 생성 및 인스턴스 생성
+    Class<?> clz = Class.forName("class kr.or.hira.sample.Sample1"); // 클래스를 메모리에 로딩
+    system.out.println(clz);
+    Constructor<?> con = clz.getConstructor();
+    system.out.println(con);
+    Object obj = con.newInstance();
+    system.out.println(obj);
+
+    // private 메서드 호출 방법
+    Field =  clz.getDeclaredField("name");
+    field.setAccessible(ture);
+    field.set(obj, "홍길동");
+
+    // Reflection
+    Method method = clz.getDeclaredMethod("doA", null);
+    method.invoke(obj, null); // Method가 주어고 대상이 Object.★ obj = this ★
+}
+
+출력:
+class kr.or.hira.sample.Sample1
+public kr.or.hira.sample.Sample1()
+kr.or.hira.sample.Sample1@548c4f57
+Sample1 doA
+
+	<bean name="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+		<property name="driverClassName"
+			value="org.mariadb.jdbc.Driver" />
+		<property name="jdbcUrl"
+			value="jdbc:mariadb://30.100.1.164:3306/springdb" />
+		<property name="username" value="springdbuser" />
+		<property name="password" value="springdbuser" />
+		<property name="connectionTimeout" value="30000" />
+		<property name="minimumIdle" value="2" />
+	</bean>
+
+* 함수라고 부를 수 있는 건 생성자 밖에 없다.
+* 컴파일러가 기본 생성자를 만들어 준다.
+
+* RTTI : Runtime Type Invocation
+
+* Java: this, Python: self
+- 메모리상에 경계선을 만들면 컨텍스트
+- 다른 메모리를 참조하는 키워드 : this, self
+
+* interface
+
+* XML 설정과 클래스 설정을 맞추기 위해서 -> 어노테이션 사용(코드 위에 바로 사용)
+
+* 어노테이션의 단점
+  - 자바 코드가 없으면 쓸 수 없다. ★
+  - 코드 변경시 다시 빌드해야 한다.
+
+* 우리에게 소스코드가 없는 라이브러리를 가져다 사용할 때 XML만 쓴다.
+
+* 심평원 사용 Spring 버전: 4.x, 5.x
+
+* @ContextConfiguration("file:src/main/webapp/WEB-INF/spring/root-context.xml")
+  - Application Context
+
+* 의존성 주입, 빈
+  - 내가 필요할 때 외부의 코드를 주는 것
+
+## s1에 kr.or.hira.board 패키지 추가
+
+## 서비스 계층: 고객의 요구사항의 명세서가 나오는 곳
+  - 고객의 비즈니스에 맞는 예외처리가 들어감
+  - 트랜잭션
+  - 개발자와는 서비스의 설계로 커뮤니케이션
+
+## 교재 33p
+
+## 실습
+
+### 실습방향
+
+1. MyBatis 를 독립적: Controller Service DAO Mapper
+2. MyBatis Spring 연동: Controller Service Mapper
+-> 2번
+
+1. DTO와 VO 별도: JPA 에서는 1번이 맞음
+2. DTO만: MyBatis 의 성격으로 보면 
+-> 2번
+
+패키지 구조
+1. 수평적 분할 : 프로젝트를 분할하는데 도메인별로 분할
+2. 수직적 분할
+-> 2번
+
+### 패키지 생성
+kr.or.hira.controller
+kr.or.hira.dto
+kr.or.hira.mapper
+kr.or.hira.service
+
+### MyBatis
+
+- DB 설치 후 먼저 시간과 Charset을 확인해야 한다.
+- DB 설계시 회원이 중심에 놓여있다면, 확장성이 없는 설계일 수 있다.
+
+* https://mybatis.org/mybatis-3/
+
+### 교재 69p
+
+### 필요 라이브러리
+1. MyBatis라이브러리
+2. 스프링과 연결해 주는 라이브러리
+
+* /s1/pom.xml
+	<dependency>
+	    <groupId>org.mybatis</groupId>
+	    <artifactId>mybatis</artifactId>
+	    <version>3.5.16</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.mybatis</groupId>
+	    <artifactId>mybatis-spring</artifactId>
+	    <version>3.0.4</version>
+	</dependency>
+-> pom.xml에서 확인
+
+* /s1/src/main/webapp/WEB-INF/spring/root-context.xml
+xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+
+* 개발 방향 : 나는 Mapper 만 설정하면, 나머지는 알아서(자동으로?)
+
+## p73~74
+
+### TimeMapper.java
+
+### root-context.xml
+	<bean name="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+		destroy-method="close">
+		<constructor-arg ref="hikariConfig" />
+	</bean>
+
+	<bean class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	<mybatis-spring:scan
+		base-package="kr.or.hira.mapper" />
+
+### Mybatis 설정
+- MyBatis 자체 설정 파일
+- Mapper : SQL 설정 파일
+
+※ Mapper vs. Bind
+  - Mapper : A 패러다임에서 B 패러다임으로 바꾸는 것. 객체 패러다임으로 전환
+  - Bind : ?
+
+### 80p
+
+* /s1/src/main/resources/mapper/TimeMapper.xml 생성
+
+* p77 맨아래 DTD
+
+* id 는 메서드 이름과 동일
+
+<mapper namespace="kr.or.hira.mapper.TimeMapper">
+	<select id="getTime" resultType="string">
+		select now()
+		;
+	</select>
+</mapper>
+
+* 정상적인 testNow() 실행 후, 다음 문구 확인
+kr.or.hira.db.DBTests kr.or.hira.db.DBTests.testNow(DBTests.java:30)  INFO 2025-07-22 10:44:00
+
+### 개발 순서
+1. interface 만들기
+2. xml 만들기
+3. test
+
+## 게시판 만들기
+
+* NOT NULL 넣는 이유 : 인덱스로 사용하기 위해★
+
+* p115 DBeaver 에서 Table 생성
+CREATE TABLE tbl_board (
+    bno INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(500) NOT NULL,
+    content VARCHAR(2000) NOT NULL,
+    writer VARCHAR(50) NOT NULL,
+    regdate timestamp default NOW() ,
+    updatedate timestamp default NOW(),
+    delflag BOOLEAN DEFAULT FALSE
+);
+
+INSERT INTO TBL_BOARD (TITLE, CONTENT, WRITER) VALUES ('TITLE..', 'CONTENT..', 'USER');
+
+INSERT INTO TBL_BOARD (TITLE, CONTENT, WRITER)
+SELECT TITLE, CONTENT, WRITER FROM TBL_BOARD WHERE BNO > 0;
+
+select * from tbl_board order by bno desc;
+
+* 테이블풀스캔을 줄이는 방법 -> 색인 엔진
+
+* paging
+select * from tbl_board order by bno desc limit 10 offset 10
+;
+-- paging 0: 693
+-- paging 10: 683
+
+* like 성능 저하 -> 풀스캔 방지해야 함 -> 최근 몇건 내에서 조회 또는 기간 조회
+
+* DTO
+  - join이 없어서 클래스와 1:1 매칭이 된다.
+
+* 날짜: LocalDateTime 씀
+   - 예전에는: DateTime 또는 Calendar 씀
+
+* select count(bno) from tbl_board where bno > 0
+;
+
+* BoardDTO
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class BoardDTO {
+	private Integer bno;
+	private String title;
+	private String content;
+	private String Writer;
+	private LocalDateTime regDate;
+	private LocalDateTime updateDate;
+	private boolean delFlag;
+
+}
+
+* BoardMapper 인터페이스
+
+- 두개 이상의 데이터는 클래스로 던지는게 좋다
+
+* BoardMapper.xml
+<mapper namespace="kr.or.hira.mapper.BoardMapper">
+	<select id="list" resultType="kr.or.hira.dto.BoardDTO">
+		SELECT * FROM tbl_board ORDER BY bno DESC LIMIT 10 OFFSET 0
+	</select>
+</mapper>
+
+* SELECT * FROM tbl_board ORDER BY bno DESC LIMIT 10 OFFSET 0 의 단점
+  - 연산이 안됨. 식을 못 넣음. 값만 넣을 수 있음.
+
+* 변경
+// java 파일
+List<BoardDTO> list(int skip);
+// xml 파일
+<mapper namespace="kr.or.hira.mapper.BoardMapper">
+	<select id="list" resultType="kr.or.hira.dto.BoardDTO">
+		SELECT * FROM tbl_board ORDER BY bno DESC LIMIT 10 OFFSET #{skip}
+	</select>
+</mapper>
+
+// test 파일
+	@Test
+	public void testList() {
+		int skip = 10;
+
+		boardMapper.list(skip).stream().forEach(log::info);
+	}
+
+## PRG (Post Redirect Get) 패턴
+
+## p76 Logger 설정
+
+* log4j2.xml 에 추가
+		<Logger name="com.zaxxer" level="DEBUG" additivity="false">
+			<AppenderRef ref="console" />
+		</Logger>
+
+* JUnit 실행하면 콘솔에 SQL 로그가 나온다.
+kr.or.hira.mapper.BoardMapper.list org.apache.ibatis.logging.jdbc.BaseJdbcLogger.debug(BaseJdbcLogger.java:135) DEBUG ==>  Preparing: SELECT * FROM tbl_board ORDER BY bno DESC LIMIT 10 OFFSET ?
+kr.or.hira.mapper.BoardMapper.list org.apache.ibatis.logging.jdbc.BaseJdbcLogger.debug(BaseJdbcLogger.java:135) DEBUG ==> Parameters: 10(Integer)
+
+## PageRequestDTO 클래스 생성
+
+※ object pool, socket pool, connection pool
+
+* 생성자 호출하는 this( ...... )는 맨 위에 있어야 한다. 생성하기 전에는 아무것도 못함. -> 엄격
+	public PageRequestDTO() {
+		System.out.println("AAAAA");
+		this.page = 10;
+		this.size = 10;
+		this(page); // 에러
+	}
+
+	public PageRequestDTO(int page) {
+		System.out.println("AAAAA");
+		this.page = 10;
+		this.size = 10;
+	}
+
+* 수정
+		SELECT * FROM tbl_board ORDER BY bno DESC LIMIT 10 OFFSET #{skip}
+->
+		SELECT * FROM tbl_board ORDER BY bno DESC LIMIT #{limit} OFFSET #{offset}
+
+
+* commerce 적 성격 : 상품데이터가 자주 바뀌지 않는다.
+  sns : 자주 바뀐다
+  -> commerce 성격이면 캐시를 고려할 수 있다.
+
+* 무한스크롤은 sns에 적함.
+  - 데이터가 삭제되는 것은 무한스크롤을 하면 안됨.
+
+* Soft Delete(컬럼의 값만 삭제되었다고 표시) vs. Hard Delete(실제 delete 쿼리 수행)
+  - Hard Delete 를 하면 통계가 달라진다.
+
+##
+
+* p52 servlet-context에 추가
+
+<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+<property name="prefix" value="/WEB-INF/views/"/>
+<property name="suffix" value=".jsp"/>
+</bean>
+
+* p117 servlet-context에 추가
+<mvc:resources mapping="/resources/**" location="/resources/" />
+
+
+-------------------------------------------------------------------------------
+* CSS 확인
+http://localhost:8080/resources/dist/css/sb-admin-2.css
+
+-------------------------------------------------------------------------------
+
+게시물처리
+
+기능	URL	컨트롤러	메서드	파라미터	ViewName	우선순위	담당자
+
+등록	/board/register (GET) - 입력
+	/board/register (POST) - 처리 -> RE(redirect):/board/list
+
+수정	/board/edit/번호 (GET)
+	/board/edit/번호 (POST) - 처리 -> RE:/board/view/번호
+
+삭제	/board/edit/번호 (GET)
+	/board/remove/번호 (POST) - 처리 -> RE:/board/list
+
+조회	/board/view/번호 (GET)
+
+목록(검색/페이징)
+
+※ coupang : 웹의 URL 에 대한 기준을 정확히 잡고간다.
+  - RESTful
+
+※ 수정과 삭제를 조회 화면에서 안하고, 따로 빼는 이유? 댓글
+  - 조회 화면에서 댓글이 나옴.?
+
+※ list는 입력과 설계가 동일하게 나오는 페이지이다.
+
+* 유즈케이스의 3가지 구성요소: 목적, 흐름(성공적인 케이스만), 대안
+
+* 실패했을때 처리를 어떻게 해야 할까?
+
+* Spring Annotation
+  - @Controller / @RestController
+  - @ControllerAdvice / @RestControllerAdvice
+
+

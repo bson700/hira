@@ -163,7 +163,7 @@ maven nexus (권장) : maven 레파지토리를 같은 망으로 구성해서 �
 
 ### 서버 띄우기
 1. 서버 띄우기
-2. 서버 경로 수정: Servers > 톰캣 서버 선택 > 더블클릭 > Web Moduls > Path 를 / 로 수정
+2. 서버 경로 수정: Servers > 톰캣 서버 선택 > 더블클릭 > Web Modules > Path 를 / 로 수정
 
 
 ### spring 라이브러리 확인 : 이 3개의 라이브러리 버전을 맞춰야 한다.
