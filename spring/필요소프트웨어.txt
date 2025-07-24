@@ -1,0 +1,5 @@
+apache-tomcat-10.1.34.zip
+eclipse-jee-2025-06-R-win32-x86_64.zip
+jdk-21.0.6_windows-x64_bin.exe
+lombok v1.18.36
+mariadb-11.8.2-winx64.msi
