@@ -1,0 +1,89 @@
+
+게시물 등록 POST 방식 테스트 
+
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8" -d "title=Test&content=Content&writer=user00" http://localhost:8080/board/register
+
+
+게시물 수정 POST 방식 테스트 
+
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8" -d "title=Test&content=Content&writer=user00&bno=33" http://localhost:8080/board/modify/33
+
+
+게시물 삭제 POST 방식 테스트 
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded; charset=UTF-8" http://localhost:8080/board/remove/33
+
+댓글 
+curl -X POST -H "Content-Type: application/json" -d '{
+  "bno": 100,
+  "replyText": "새로운 댓글입니다.",
+  "replyer": "홍길동"
+}' http://localhost:8080/replies
+
+첨부파일 
+curl -X POST -H "Content-Type: multipart/form-data" \
+  -F "title=Test" \
+  -F "content=Content" \
+  -F "writer=user00" \
+  -F "files=@/path/to/your/file1.jpg" \
+  -F "files=@/path/to/your/file2.png" \
+  http://localhost:8080/board/register
+
+curl -X POST -H "Content-Type: multipart/form-data" -F "files=@C:/202507/aaa.jpg" http://localhost:8080/upload
+
+create table tbl_reply (
+  rno int auto_increment primary key,
+  replytext varchar(500) not null,
+  replyer varchar(50) not null,
+  bno int not null,
+  replyDate timestamp default now(),
+  delflag boolean default false
+)
+;
+
+create index idx_reply_board on tbl_reply(bno desc, rno asc)
+;
+
+
+
+curl -X POST -H "Content-Type: application/json" -d "{\"bno\": 100,\"replyText\": \"새로운 댓글입니다.\",\"replyer\": \"홍길동\"}" http://localhost:8080/replies
+
+create table persistent_logins (
+	username varchar(64) not null,
+	series varchar(64) primary key,
+	token varchar(64) not null,
+	last_used timestamp not null
+);
+
+SELECT * FROM persistent_logins;
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>javax.servlet.jsp</groupId>
+			<artifactId>jsp-api</artifactId>
+			<version>2.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+			<version>1.2</version>
+		</dependency>
+
+<security:authentication-manager>
+        <security:authentication-provider>
+            <security:user-service>
+                <security:user name="admin" password="admin" authorities="ROLE_ADMIN" />
+                <security:user name="user" password="user" authorities="ROLE_USER" />
+            </security:user-service>
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+
+
+
