@@ -1,0 +1,439 @@
+4일차
+
+<산출물>
+1. 게시판 URL 분석: get/post 방식 정리 ?
+2. ReplyController 를 보고, excel 에 문서로 정리
+
+<내일 일정>
+1. 파일업로드
+2. Spring Security
+3. Spring 4.x 설명
+4. 사후 평가
+
+---
+
+5일차
+
+* 게시글은 역순. 댓글은 오름차순
+
+* payload 전송 방법 2가지 : POST, PUT
+
+* 버전1: jsp 에서 페이징 처리
+  버전2: JS 로 페이징 처리
+
+* 교재에는 8장이 없음.
+
+* 모든 비동기 통신의 리턴 타입은 promise 임.
+
+* async, await, 결과가 오면 then
+
+* read.jsp 197 : axios.get(`/replies/\${bno}/list`,
+  - backtick : `
+  - backtick 없었으면, 문자열 연결을 위한 + 연산자 많이 사용하게 됨.
+
+
+* <input type="text" name="title" class="form-control" value="<c:out value='${board.title}'/>" readonly>
+  - 출력할 때 반드시 c:out을 사용하는 이유
+    - c:out 을 쓰지 않으면 스크립트를 그대로 넣을 수 있다. -> XSS 등 보안 위협이 있을 수 있다.
+    -> 공공기관에서 특히 중요
+
+* jsp 에서 ${board.title} : jsp의 $
+  js 에서 \${board.title} : JS의 $
+
+* 캡쳐링 false
+
+* JS 의 함수 호출은 파라미터의 개수가 안 맞아도 된다.
+  -> JS 에는 오버로딩이 없다.
+
+---
+
+9장 파일업로드
+
+* BLOB, CLOB
+  - BLOB: Binary
+  - CLOB: Character
+
+* Poster 이미지 데이터를 DB에 넣으면?
+  - 값싼 HDD, 비싼 DB
+  - 속도
+
+* 영상 판독 데이터는 DB로 보관해도 된다.
+
+1. 보관 대상을 정해야 한다.
+2. 서비스의 주체를 어떻게 할건지 결정해야 한다.
+3. 파일 용량을 신경써야 한다.
+
+* 사용 소프트웨어 사용하는 이유
+  - 책임 이유로
+
+* WAS의 부하를 줄이기 위해 Web, WAS를 분리
+
+* CDN Content Delivery Network
+
+* 파일을 올리고 클라우드 서비스 또는 CDN 서버에 쌓아야 한다.
+
+* 파일 저장 방식: 파일을 어떤 식으로 보관할까
+  - 한 폴더에 파일이 많아질 수록 인덱싱 속도가 떨어진다.
+  - 연월일 폴더 만들어서 파일을 쌓아야 한다.
+  - 1) 시간값 체크 2) UUID
+
+* Tomcat Directory Listing 버그
+
+* 파일을 올리면 썸네일을 만들어줘야 한다.
+  - 네트워크에서 성능
+
+* webp
+  - web을 위한 이미지 포맷
+  - 압축률이 크다.
+  - 압축할 때 속도가 떨어진다.
+  - 예) 3M -> 약 500KB
+  -> 포맷팅할때 webp 많이 씀
+
+* LocalDateTime 변환 위해 jackson-datatype-jsr310 써야 한다.
+
+* 코드 상 발전이 어려운 라이브러리는 쓰지 말자.
+  - 어떻게 판단? 마지막 업데이트 일자를 확인하자.
+
+* JDK 4 버전 부터 ImageIO 가 지원되어, Thumbnail을 만들수 있다.
+  Thumbnailator는 공기업에서는 쓰지말자
+
+* pom.xml 에 thumbnailator 추가
+		<dependency>
+			<groupId>net.coobird</groupId>
+			<artifactId>thumbnailator</artifactId>
+			<version>0.4.20</version>
+		</dependency>
+
+* private List<String> uploadFiles(MultipartFile[] files)throws RuntimeException {
+  - 첨부파일을 C:\upload 폴더에 쌓음
+  - 파일이름: UUID.randomUUID().toString()
+  - 파일복사: FileCopyUtils.copy(fin, fos); // Spring 에서 제공
+  - MIME: 지금 나에게 들어온 데이터가 어떤 데이터인지 확인
+  - content-type 이 이미지 타입이면, s_ 를 붙여서 200x200의 Thumbnail 파일 생성
+  - 목록 데이터는 썸네일로 처리
+
+* 9장 p28 그림
+  - 썸네일은 s_ 가 붙어있음
+
+* 파일 업로드/다운로드시 cos library 사용하지 말것
+  - 예전에는 tomcat 이 파일 업로드 지원 안했음?
+  - 서블릿 3.0 부터 파일 업로드 기능을 지원했다.
+  - 1) <multipart-config> 없으면 파일 업로드 뿐 아니라 데이터(?) 처리도 안됨
+  - 2) <bean id="multipartResolver"
+     -> 이거 두가지는 반드시 있어야 함
+
+* AWS S3 은 기본 업로드 파일 사이즈는 1MB로 설정되어 있다. 그러므로, 이보다 크면 확인 필요.
+
+* 파일 삭제를 마음대로 하면 될까?
+
+* 파일 업로드 공격
+  - 반드시 첨부 파일 공격에 대비해야 한다.
+
+* JPA 보다 Mybatis의 좋은 기능 -> JOIN
+
+* 9장 p2 상품 테이블, 상품 이미지 테이블
+  - product_image : 1
+  - tbl_product_image : N
+  - 연관관계 해석할 때는 다대일로 읽는다.
+     상품의 이미지가 하나의 상품에 속한다.
+
+* 9장 p5
+//상품 이미지들
+private List<ProductImageDTO> imageList;
+--> Join 필요. JPA 보다 Mybatis 가 편함
+
+* 9장 p10
+
+SELECT p.pno, pname, pdesc, price, sale, writer, p.regdate, ino, uuid, filename, ord
+FROM
+tbl_product p LEFT OUTER JOIN tbl_product_image pimg ON pimg.pno = p.pno
+WHERE p.pno = 1
+
+- 상품 1개, 이미지 2개 -(조인)-> 2행
+- ResultType 은 Row 1개
+
+* p11 collection
+
+<resultMap type="ProductDTO" id="selectMap">
+(중략)
+<collection property="imageList" ofType="ProductImageDTO">
+    <id property="ino" column="ino"/>
+    <result property="uuid" column="uuid"/>
+    <result property="fileName" column="fileName"/>
+    <result property="ord" column="ord"/>
+</collection>
+</resultMap>
+
+* resultMap 을 쓰면 1:다 처리 가능하다.
+<select id="selectOne" resultMap="selectMap">
+
+* 페이징 처리는 이걸 쓰면 안됨.
+
+* 파일을 언제 삭제해야 하는가?
+  - 나중에 몰아서 -> Spring Batch or Cron Tab
+  - Cron Tab 기능을 하는 Quartz 라이브러리가 있다.
+  - Quartz 라이브러리: Java 기반의 오픈 소스 작업 스케줄링 라이브러리
+  -> 오랫동안 사용하지 않는 파일을 정리해 줄때만 지워야 한다.
+
+---
+
+10장 스프링 시큐리티
+
+* 규모가 작은 시스템 vs. 규모가 큰 시스템
+  - 공기업은 ACL(권한) 설계를 먼저 하고 들어간다.
+  - 대상과 주체가 있다.
+  - IA Information Architecture 마다 ACL 을 만들어 줘야 한다.
+
+* 인증 처리 3가지?
+  1) OAuth : 제 3자 인증
+      - 컨셉: 나에게 필요한 이용자의 정보만 내가 보관하겠다.
+                즉, 내가 최소한의 정보를 유지하고 싶을 때 이 방식 사용.
+      - 내가 이용자의 정보를 많이 보관할 수록, 사고 났을때 위험.
+  2) 토큰 인증 : JWT
+      - API 서버를 쓸때 많이 사용.
+      - 외부 거래(필수), 내부 거래(거의 필수) 둘다 씀.
+  3) 세션/쿠키 기반 : 전통적인 Application
+      - 보통 JSP, Thymeleaf 사용할 때 씀
+
+   ?)번을 만들때는 인터셉터를 만들고, ?)번을 만들때는 필터를 쓴다.
+
+* Spring Security 에는 OAuth 클라이언트, OAuth 서버가 있다.
+
+* CH10 p3
+- 3가지 라이브러리 추가
+	<artifactId>spring-security-config</artifactId>
+	<artifactId>spring-security-web</artifactId>
+	<artifactId>spring-security-taglibs</artifactId>
+
+* Spring Security 예제는 Java Configuration 사용 예정
+
+* Spring 6 버전은 XML 설정을 이용할 수 있으나, 기능 제한이 많아짐
+  - Java 설정을 이용하는게 완벽
+    -> JSP 나 Controller 에서 사용자 정보를 마음대로 쓸 수 있다.
+    -> XML 설정하면, 인증은 되나, 사용자 정보를 마음대로 쓸 수 없다.
+
+* 인프런 강의는 Spring 5 버전이용하고, 설정을 XML 로 함
+
+* p61
+  @PreAuthorize("isAuthenticated()")
+  public String read(Authentication authentication, @PathVariable("bno")Long bno, Model model ) {
+  - authentication : 사용자의 인증 정보
+
+// @PreAuthorize에
+// DTO의 writer 와 현재 사용자의 username 이 같아야만 처리할 수 있다는 기능을 구현할 수 있다.
+// 5버전은 xml 로 되었는데, 6버전은 xml로 안된다.
+
+<시험>
+
+DI / IoC: 프레임워크가 객체 관리.
+
+AOP: aspect advice pointcut joinpoint
+    - aspect    : (기능) 이러 이러한 기능(log 찍는 기능 등)을 aspect
+    - advice    : (실체) aspect를 실체화 된 것이 advice
+    - joinpoint : (후보) aspect 를 적용할 수 있는 여러 지점(후보)들
+    - pointcut  : (결정) 여러 joinpoint 중 우리가 결정한 것
+
+SqlSessionFactory
+
+DispatcherServlet
+
+p96 DataSourceTransactionManager
+
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <property name="dataSource" ref="dataSource"/>
+</bean>
+
+---
+
+FrontController Pattern (Facade Pattern)
+  - vvh-avv.tistory.com/21
+
+* Ch10 p2
+
+* Spring Security 는 필터로 동작한다.
+  - 필터는 웹 설정이므로 web.xml 에 한다.
+  - Session과 Cookie는 같다.
+  - 스탬프 카드 vs. 플라스틱 카드
+    - 이 사람이 나한테 온 적이 있는가를 판단 => 세션 트래킹
+    - 번호만 들고 다니는게 안전하다.
+    - 쿠키 vs. 세션 쿠키(서버에서 데이터를 보관. 로그인 정보 보관.)
+
+* 세션 밤
+  - 세션 저장소.  키(카드번호)
+    -> 많은 사용자가 오면 많은 메모리(그래서, 예전 포탈 사이트 로그인 시간 짧았음(30분))
+    -> 회원카드 버리고 같은 사용자가 또옴. -> 계속 접속하면 메모리 소모 --> WAS 가 예외 발생
+  - 모바일 시대에도 사용자는 입력 -> 쿠키 사용(장점, 완료시간 유효시간 지정 가능 -> 자동로그인할 수 있다)
+  - Spring Security: 쿠키 세션 안만들어도 됨
+  - JSESSIONID : 톰캣이 만들어준 플라스틱카드. JSESSIONID 라는 이름은 WAS 마다 다름.
+
+* Error vs. Exception
+  - 에러: 개발자가 손쓸 수 있는 거. ex) OutOfMemory Exception
+  - 예외: 개발자가 조치할 수 있는 거
+
+* WeakedHashMap: Garbage Collection을 할수 있는 HashMap
+
+* p4 web.xml 에 추가
+<filter>
+<filter-name>springSecurityFilterChain</filter-name>
+<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+</filter>
+<filter-mapping>
+<filter-name>springSecurityFilterChain</filter-name>
+<url-pattern>/*</url-pattern>
+</filter-mapping>
+
+추가하고 서버 시작하면, 에러 발생
+org.springframework.beans.factory.NoSuchBeanDefinitionException: No bean named 'springSecurityFilterChain' available
+
+root-context.xml
+<context:component-scan base-package="kr.or.hira.security"></context:component-scan>
+
+
+* deprecated 는 사용하면 안됨. -> 검수하면 빠꾸
+
+* Securitey 관련 클래스는 패키시 별도로 빼는게 좋다.
+
+* @Configuration : xml 대신 Java 로 설정하겠다.
+
+* 서버 실행해서 로그 확인
+kr.or.hira.security.SecurityConfig kr.or.hira.security.SecurityConfig.filterChain(SecurityConfig.java:18)  INFO ---------------security config----------------
+
+* http://localhost:8080/login -> HTTP 상태 404
+
+* p6
+
+* 인증(Authentication) 인가(Authorization)
+  - 인증: 이용자가 하는것. ex) 부대에 들어가기 위해 신분증을 건내줌.
+  - 인가: 허가. Spring Security 내부에서 해줌.
+
+* 3단구현: interface -> abstract class -> concrete class
+
+* p7. UserDetailsService interface
+
+* p9
+Spring 6버전에서 람다식을 적용
+
+* http://localhost:8080/login 로그인 페이지 나옴
+
+* p8 다음 로그 찍히는거 확인
+kr.or.hira.security.CustomUserDetailsService kr.or.hira.security.CustomUserDetailsService.loadUserByUsername(CustomUserDetailsService.java:14)  INFO -------------loadUserByUsername------------
+
+* 스프링 4 버전은 패스워드 인코딩 안해도 된다. 5 6 버전은 패스워드 인코딩을 반드시 해야 한다.
+
+* https://bcrypt-generator.com/
+  - Bcrypt 웹사이트를 이용해서 만들어진 단방향 알고리즘
+  - Generate Hash 버튼을 누르면 값이 바뀜
+  - 사용자가 Plain Text 를 넣으면 이런 값이 나올 수 있다.
+
+* UserDetails
+  - 사용자의 인증 정보 포함
+
+* username 대신 member, user 를 쓰면 안된다.
+  - member 가 reflection 에서도 똑같이 있다.
+
+* 예외
+java.lang.IllegalArgumentException: There is no PasswordEncoder mapped for the id "null"
+--> PasswordEncoder 필요(버전 마다 다름)
+
+* BCryptPasswordEncoder를 SecurityConfig class 에 추가
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+* BCrypt 는 "1111"로 이 문자열이 나올 수 있는지만 판단해줌.
+  - 		UserDetails user = User.builder()
+				.username(username)
+				.password("$2a$12$U.8U/gUpM3ZFeB4G4Wd7yeceDrq0WEzB8G12BfTR2AZ9PamO8kXFG")
+				.roles("USER") //ROLE_USER
+				.build();
+
+* 주소줄에 http://localhost:8080/ 이 나오면 정상
+
+* web browser 에서 Cookies에서 JSESSIONID 삭제 -> 로그아웃
+
+* Spring Security 의 로그인 후처리
+  1) case 1: 처음부터 /login 으로 가는 경우
+  2) case 2: 튕겨져서 /login 으로 가는 경우
+
+* CSRF
+localhost:8080/login
+<input name="_csrf" type="hidden" value="xN2(중략)ZZr" />
+GS25 사이트 CSRFToken
+
+* Auction 2008년 csrf 공격
+
+* servlet-context.xml에
+<security:global-method-security pre-post-annotations="enabled"/> 추가해야 시큐리티 관련 중복 코딩 줄일 수 있다.
+-> @PreAuthorize("isAuthenticated()") 어노테이션 추가하면 해당 페이지는 인증을 거쳐야 접속할 수 있
+-> 이 기능을 사용할 수 없다면, 해당 url마다 인증을 거쳐야 한다.
+
+* 게시글에서 글쓴이만 해당 게시글을 조회하고자 한다.
+@PreAuthorize("authentication.name == #boardDTO.writer")
+
+* 403(Forbidden) 처리
+- 권한 처리할 때 사용한다.
+- 스프링 시큐리티에서는 AccessDeniedHandler를 추가해서 사용할 수 있다.
+- @PreAuthorize("hasRole('ADMIN")로 설정하면 아래처럼 user로 설정되어 있으므로 403 상태코드를 받는다.
+			UserDetails user = User.builder()
+				.username(username)
+				.password("$2a$12$U.8U/gUpM3ZFeB4G4Wd7yeceDrq0WEzB8G12BfTR2AZ9PamO8kXFG")
+				.roles("USER") //ROLE_USER
+				.build();
+
+* securityconfig에서 리맴버미 설정하면, 로그인 시 체크박스가 생긴다.
+체크하고 로그인하면 JSessionID 이외에 remember-me 쿠키가 생성된다.
+expires를 확인하면 기본 세팅이 2주인 것을 확인할 수 있다.
+이 쿠키는 파일 시스템에 저장되는데, 해당 사이트를 방문하면 이 쿠키를 보낸다.
+즉, 브라우저를 재시작해도, 세션이 유지된다.
+http.rememberMe(config -> {
+			config.key("1234567890");
+		});
+
+* 데이터베이스를 이용해 remember-me 저장(p.48)
+- 아래 내용을 configuation에 추가하면 DB에 세션정보를 저장할 수 있다.
+@Bean
+public PersistentTokenRepository persistentTokenRepository() {
+JdbcTokenRepositoryImpl tokenRepository = new JdbcTokenRepositoryImpl();
+tokenRepository.setDataSource(dataSource);
+// tokenRepository.setCreateTableOnStartup(true); // 테이블 자동 생성하기 – 추천하지 않음
+return tokenRepository;
+
+*인증정보활용은 JSP와 Controller에서 설정해야 한다.(p.56 참고)
+
+* 톰캣 9버전 세팅
+- 톰캣 버전에 맞는 jdk 버전 확인
+	- tomcat9 - jdk 8(이상)
+	- 우리는 11버전으로 세팅
+- window - preference - server - runtime enviroments
+	- tomcat9, jdk21로 설정
+- 이클립스에 dynamic web project 생성
+	- 프로젝트명 s3로 설정
+- maven project로 전환
+- jdk 버전 설정
+	- pom.xml에 <release>21</release>을 11로 수정
+	- 일반적으로 8이나 11로 설정
+- pom.xml 설정
+	- pom.xml 복붇
+	- junit 버전확인
+- root-context.xml
+	- 	<mybatis-spring:scan base-package="kr.or.hira.mapper"/> 지우기
+- servlet-context.xml
+	- 건드릴 것 없음
+- web.xml
+	- 복붙
+	- /WEB-INF/spring/security-context.xml 지우기
+	- 스프링 시큐리티 필터 지우기
+	<filter>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	지우기
+- ***resource 폴더만들기 
+	- resource/mapper 폴더 만들기
+***자바 버전 확인

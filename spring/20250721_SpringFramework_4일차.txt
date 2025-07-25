@@ -240,13 +240,108 @@ list?page=3&size=30&types=TCW&keyword=44
   - Access Token, Refresh Token
   - OAuth Authentication
 
+* axios vs. fetch
+  - axios : json 만 보낼 때 편함. axios 는 기본이 json.
+  - fetch : file 도 보낼 경우 편함
 
+* Spring @RestController
+  - 리턴 타입이 특이함: ResponseEntity<DTO> 쓰는 것을 권장
+  - ResponseEntity<DTO>를 쓰는 이유: 상태 코드를 제어할 수 있다.
+  - 보통 Spring 리턴 타입은 void or String
 
+* ReplyMapper.xml, ReplyMapper.java, ReplyDTO.java 복사
 
+* ReplyController.java 생성
 
+* 등록테스트
+   - 1376222 : 게시물 번호 1개 파악
 
+* 예전 코드
+@Controller // Changed from @RestController
+@RequestMapping("/replies")
+@Log4j2
+@RequiredArgsConstructor
+public class ReplyController {
+	private final ReplyService replyService;
 
+	@PostMapping("")
+	@ResponseBody // Added @ResponseBody to indicate the return value should be bound to the web response body
+	public ResponseEntity<ReplyDTO> post(@RequestBody ReplyDTO replyDTO) { // Added @RequestBody for receiving JSON
+		log.info("Received reply DTO: " + replyDTO);
+		try {
+			// Assuming replyService.register returns the created ReplyDTO
+			ReplyDTO createdReply = replyService.register(replyDTO); 
+			return new ResponseEntity<>(createdReply, HttpStatus.CREATED);
+		} catch (Exception e) {
+			log.error("Error creating reply: " + e.getMessage(), e);
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+}
 
+* 최신 코드
+questMapping("/replies")
+@Log4j2
+@RequiredArgsConstructor
+public class ReplyController {
+	private final ReplyService replyService;
+
+	@PostMapping("")
+	public ResponseEntity<ReplyDTO> post(@RequestBody ReplyDTO replyDTO) {
+	}
+}
+
+* @RequestBody 
+  -  json 데이터를 java 의 dto 로 바꾸어줌
+
+* CURL 스크립트
+댓글 
+curl -X POST -H "Content-Type: application/json" -d '{
+  "bno": 100,
+  "replyText": "새로운 댓글입니다.",
+  "replyer": "홍길동"
+}' http://localhost:8080/replies
+
+* 오류 수정
+curl -X POST -H "Content-Type: application/json" -d "{\"bno\": 100,\"replyText\": \"New Reply.\",\"replyer\": \"HongGilDong\"}" http://localhost:8080/replies
+
+* promise, async, await
+
+* 동기: 순서, / 비동기: 진동벨 / 콜백(비동기 결과 받음)
+
+* 콜백지옥 -해결-> promise, async, await
+  - promise : 이 함수가 반환하는 건 진동벨?
+
+* async, await : 6~7년전 출생
+async function addReply(replyObj) {
+	const res = await axios.post('http://localhost:8080/replies', replyObj);
+	console.log(res);
+}
+- async 함수의 리턴은 무조건 promise
+- async 안에서는 await 키워드를 활용해서 동기 코드처럼 작성 가능
+
+- axios.post : 커피 주문 -> 결과오면 얘를 찍어줘...
+- (await) const res = axios.post('http://localhost:8080/replies', replyObj); // Promise : 진동벨 줌
+
+* undefined : 변수를 만들었지만, 사용하지 않았어!
+
+* axios를 쓰는 이유
+  1) 기본이 json 포맷: json 다룰 대 편함.
+  2) async 함수는 진동벨(Promise)만 반환함.
+     async 함수 내부에서 await 키워드를 이용하면 동기 코드 처럼 사용 가능
+  3) async 함수를 결과를 이용하려면, ".then( result => " 이용
+
+<산출물>
+1. 게시판 URL 분석: get/post 방식 정리 ?
+2. ReplyController 를 보고, excel 에 문서로 정리
+
+<내일 일정>
+1. 파일업로드
+2. Spring Security
+3. Spring 4.x 설명
+4. 사후 평가
+
+* 
 
 
 
