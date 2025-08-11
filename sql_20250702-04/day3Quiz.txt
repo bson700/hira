@@ -1,0 +1,14 @@
+--다음 명령문이 처음 1개의 결과 행을 빠르게 반환하는 실행계획을 작성하도록 SQL 힌트를 추가하여 명령문을 재작성 합니다. 
+SELECT /*+ FIRST_ROWS(1) */employee_id, hire_date, manager_id, department_id
+FROM employees
+WHERE department_id > 50;
+
+--위 명령문의 실행계획을 생성한 후 DBMS_XPLAN을 사용하여 실행계획을 확인합니다. 
+select * from table(dbms_xplan.display);
+
+--C##HR 사용자 스키마의 객체들에 대한 통계를 확인합니다. (USER_TABLES 조회)
+SELECT table_name, num_rows, blocks, empty_blocks, 
+       to_char(last_analyzed, 'yy/mm/dd hh24:mi:ss') as last_analyzed_date
+from user_tables;
+--DBMS_STATS 패키지를 사용하여 스키마의 모든 객체 통계를 최신으로 업데이트 합니다.
+exec dbms_stats.gather_schema_stats('c##hr')

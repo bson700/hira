@@ -1,0 +1,135 @@
+--Btree Index
+EXPLAIN PLAN FOR
+SELECT * FROM customers
+WHERE cust_last_name = 'Harris';
+
+SELECT * FROM table(dbms_xplan.display);
+
+CREATE INDEX cust_lname_ix ON customers(cust_last_name);
+
+EXPLAIN PLAN FOR
+SELECT * FROM customers
+WHERE cust_last_name = 'Harris';
+
+SELECT * FROM table(dbms_xplan.display);
+
+SELECT table_name, index_name, uniqueness
+FROM user_indexes
+WHERE index_name = 'CUST_LNAME_IX';
+
+--조합인덱스
+CREATE INDEX cust_name_ix ON customers(cust_first_name, cust_last_name);
+DROP INDEX cust_lname_ix;
+
+EXPLAIN PLAN FOR
+SELECT * FROM customers
+WHERE cust_first_name = 'Jack' AND cust_last_name = 'Harris';
+
+SELECT * FROM table(dbms_xplan.display);
+
+EXPLAIN PLAN FOR
+SELECT * FROM customers
+WHERE cust_first_name = 'Jack';
+
+SELECT * FROM table(dbms_xplan.display);
+
+EXPLAIN PLAN FOR
+SELECT * FROM customers
+WHERE cust_last_name = 'Harris';
+
+SELECT * FROM table(dbms_xplan.display);
+
+DROP INDEX cust_name_ix;
+
+--함수기반 인덱스
+CREATE INDEX emp_sal_ix ON employees(salary);
+
+EXPLAIN PLAN FOR
+SELECT * FROM employees
+WHERE salary > 12000;
+
+SELECT * FROM table(dbms_xplan.display);
+
+EXPLAIN PLAN FOR
+SELECT * FROM employees
+WHERE salary*0.9 > 12000;
+
+SELECT * FROM table(dbms_xplan.display);
+
+DROP INDEX emp_sal_ix;
+CREATE INDEX emp_sal_ix ON employees(salary*0.9);
+CREATE INDEX emp_sal2_ix ON employees(salary+salary*commission_pct);
+EXPLAIN PLAN FOR
+SELECT * FROM employees
+WHERE salary*0.9 > 12000;
+
+SELECT * FROM table(dbms_xplan.display);
+DROP INDEX emp_sal_ix;
+
+--Bitmap Index
+
+CREATE INDEX cust_gender_ix ON customers(cust_gender);
+
+EXPLAIN PLAN FOR
+SELECT * FROM customers
+WHERE cust_gender='F';
+------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name           | Rows  | Bytes | Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                |     1 |   190 |     2   (0)| 00:00:01 |
+|   1 |  TABLE ACCESS BY INDEX ROWID BATCHED| CUSTOMERS      |     1 |   190 |     2   (0)| 00:00:01 |
+|*  2 |   INDEX RANGE SCAN                  | CUST_GENDER_IX |       |       |     1   (0)| 00:00:01 |
+------------------------------------------------------------------------------------------------------
+
+EXPLAIN PLAN FOR
+SELECT cust_gender, COUNT(*) FROM customers
+GROUP BY cust_gender;
+---------------------------------------------------------------------------------------
+| Id  | Operation            | Name           | Rows  | Bytes | Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT     |                |     1 |     2 |     2   (0)| 00:00:01 |
+|   1 |  SORT GROUP BY NOSORT|                |     1 |     2 |     2   (0)| 00:00:01 |
+|   2 |   INDEX FULL SCAN    | CUST_GENDER_IX | 55500 |   108K|     2   (0)| 00:00:01 |
+---------------------------------------------------------------------------------------
+ANALYZE INDEX cust_gender_ix COMPUTE STATISTICS;
+SELECT blevel, leaf_blocks, distinct_keys, clustering_factor
+FROM user_indexes
+WHERE index_name='CUST_GENDER_IX';
+1	101	2	2513
+
+DROP INDEX cust_gender_ix;
+
+CREATE BITMAP INDEX cust_gender_ix ON customers(cust_gender);
+
+EXPLAIN PLAN FOR
+SELECT * FROM customers
+WHERE cust_gender='F';
+SELECT * FROM table(dbms_xplan.display);
+------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name           | Rows  | Bytes | Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                |     1 |   190 |     4   (0)| 00:00:01 |
+|   1 |  TABLE ACCESS BY INDEX ROWID BATCHED| CUSTOMERS      |     1 |   190 |     4   (0)| 00:00:01 |
+|   2 |   BITMAP CONVERSION TO ROWIDS       |                |       |       |            |          |
+|*  3 |    BITMAP INDEX SINGLE VALUE        | CUST_GENDER_IX |       |       |            |          |
+------------------------------------------------------------------------------------------------------
+ 
+EXPLAIN PLAN FOR
+SELECT cust_gender, COUNT(*) FROM customers
+GROUP BY cust_gender;
+SELECT * FROM table(dbms_xplan.display);
+------------------------------------------------------------------------------------------------
+| Id  | Operation                     | Name           | Rows  | Bytes | Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT              |                |     2 |     4 |     7  (58)| 00:00:01 |
+|   1 |  HASH GROUP BY                |                |     2 |     4 |     7  (58)| 00:00:01 |
+|   2 |   BITMAP CONVERSION COUNT     |                | 55500 |   108K|     3   (0)| 00:00:01 |
+|   3 |    BITMAP INDEX FAST FULL SCAN| CUST_GENDER_IX |       |       |            |          |
+------------------------------------------------------------------------------------------------
+
+
+ANALYZE INDEX cust_gender_ix COMPUTE STATISTICS;
+SELECT blevel, leaf_blocks, distinct_keys, clustering_factor
+FROM user_indexes
+WHERE index_name='CUST_GENDER_IX';
+1	3	2	5
