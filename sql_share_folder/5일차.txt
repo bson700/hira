@@ -1,0 +1,107 @@
+SELECT CHANNEL_ID, SUM(AMOUNT_SOLD)
+  FROM SALES 
+ GROUP BY CHANNEL_ID ;
+
+SELECT CHANNEL_ID, SUM(AMOUNT_SOLD)
+  FROM SALES 
+ GROUP BY CHANNEL_ID 
+ ORDER BY CHANNEL_ID;
+
+SELECT *
+  FROM (SELECT /*+ NO_MERGE */ CHANNEL_ID, SUM(AMOUNT_SOLD)
+          FROM SALES 
+          GROUP BY CHANNEL_ID)
+ ORDER BY CHANNEL_ID          ;
+ 
+SELECT * 
+  FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +OUTLINE')); 
+
+---------------------------------------------------------
+
+SELECT * 
+  FROM CUSTOMERS C 
+  JOIN SALES     S 
+    ON C.CUST_ID = S.CUST_ID ; 
+@XPLAN 
+
+SELECT /*+ LEADING(C) USE_NL(S)  */ * 
+  FROM CUSTOMERS C 
+  JOIN SALES     S 
+    ON C.CUST_ID = S.CUST_ID ; 
+@XPLAN 
+--------------------------------------------------------------------------------------------------------
+| Id  | Operation                    | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+--------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT             |               |      1 |        |    200 |00:00:00.01 |     311 |
+|   1 |  NESTED LOOPS                |               |      1 |        |    200 |00:00:00.01 |     311 |
+|   2 |   NESTED LOOPS               |               |      1 |    918K|    200 |00:00:00.01 |     115 |
+|   3 |    TABLE ACCESS FULL         | CUSTOMERS     |      1 |  55500 |     54 |00:00:00.01 |       4 |
+|*  4 |    INDEX RANGE SCAN          | SALES_CUST_IX |     54 |    130 |    200 |00:00:00.01 |     111 |
+|   5 |   TABLE ACCESS BY INDEX ROWID| SALES         |    200 |     17 |    200 |00:00:00.01 |     196 |
+--------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   4 - access("C"."CUST_ID"="S"."CUST_ID")
+ 
+SELECT /*+ LEADING(C) USE_MERGE(S)  */ * 
+  FROM CUSTOMERS C 
+  JOIN SALES     S 
+    ON C.CUST_ID = S.CUST_ID ; 
+@XPLAN  
+3-2-5-4-1-0
+----------------------------------------------------------------------------------------------------------------------
+| Id  | Operation           | Name      | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+----------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT    |           |      1 |        |    200 |00:00:00.18 |    5895 |       |       |          |
+|   1 |  MERGE JOIN         |           |      1 |    918K|    200 |00:00:00.18 |    5895 |       |       |          |
+|   2 |   SORT JOIN         |           |      1 |  55500 |      3 |00:00:00.03 |    1457 |    13M|  1396K|   11M (0)|
+|   3 |    TABLE ACCESS FULL| CUSTOMERS |      1 |  55500 |  55500 |00:00:00.01 |    1457 |       |       |          |
+|*  4 |   SORT JOIN         |           |      3 |    918K|    200 |00:00:00.15 |    4438 |    53M|  2559K|   47M (0)|
+|   5 |    TABLE ACCESS FULL| SALES     |      1 |    918K|    918K|00:00:00.04 |    4438 |       |       |          |
+----------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   4 - access("C"."CUST_ID"="S"."CUST_ID")
+       filter("C"."CUST_ID"="S"."CUST_ID")
+
+
+ 
+SELECT /*+ LEADING(C) USE_HASH(S)  */ * 
+  FROM CUSTOMERS C 
+  JOIN SALES     S 
+    ON C.CUST_ID = S.CUST_ID ; 
+@XPLAN 
+2-3-1-0
+---------------------------------------------------------------------------------------------------------------------
+| Id  | Operation          | Name      | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT   |           |      1 |        |    200 |00:00:00.03 |    1460 |       |       |          |
+|*  1 |  HASH JOIN         |           |      1 |    918K|    200 |00:00:00.03 |    1460 |    13M|  1923K|   14M (0)|
+|   2 |   TABLE ACCESS FULL| CUSTOMERS |      1 |  55500 |  55500 |00:00:00.01 |    1457 |       |       |          |
+|   3 |   TABLE ACCESS FULL| SALES     |      1 |    918K|    200 |00:00:00.01 |       3 |       |       |          |
+---------------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   1 - access("C"."CUST_ID"="S"."CUST_ID")
+ 
+
+
+SELECT /*+ LEADING(S) USE_HASH(C)  */ * 
+  FROM CUSTOMERS C 
+  JOIN SALES     S 
+    ON C.CUST_ID = S.CUST_ID ; 
+@XPLAN 
+
+
+
+
+
+
+
+
+
+
+
+

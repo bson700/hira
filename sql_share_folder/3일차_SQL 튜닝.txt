@@ -1,0 +1,87 @@
+SQL 문장의 처리 과정 
+
+1. PARSE  - 구문 분석 (실행 계획 확보)
+  - 문법 검사 
+  - 의미 분석 (객체, 권한 유/무 확인) 
+  - IF 실행 계획 존재 유/무 (동일 문장 체크) 
+      TRUE: 실행 계획 재사용 
+     FALSE: 실행 계획 생성 및 저장 
+
+2. BIND    - 바인드 (바인드 변수에 값 입력) 
+3. EXECUTE - 실행 (실행 계획 사용)
+4. FETCH   - 인출 (SELECT 명령문만) 
+
+
+SELECT * FROM DBA_DATA_FILES ;
+SHOW PARAMETER DB_BLOCK_SIZE
+
+
+SELECT * FROM EMP ; 
+select * from emp ; 
+
+select * from emp where deptno = 10 ; 
+select * from emp where deptno = 20 ; 
+
+select * from emp where deptno = :b1 ; 
+
+SELECT * FROM V$SQL ;
+SELECT * FROM V$SQL_PLAN ;
+
+
+
+SELECT * 
+  FROM SALES 
+ WHERE CHANNEL_ID = 9 ;
+
+/*+      */   => HINT 
+
+SELECT /*+ INDEX(SALES(CHANNEL_ID))  */ * 
+  FROM SALES 
+ WHERE CHANNEL_ID = 9 ;
+
+BEGIN 
+   DBMS_STATS.GATHER_TABLE_STATS(ownname       => USER
+                                ,tabname       => 'SALES'
+                                ,method_opt    => 'for columns channel_id size 4'
+                                ,no_invalidate => FALSE ) ;
+END ; 
+/
+
+SELECT  * 
+  FROM SALES 
+ WHERE CHANNEL_ID = 9 ;
+
+SELECT /*+ FULL(SALES) */ * 
+  FROM SALES 
+ WHERE CHANNEL_ID = 9 ;
+
+SELECT * FROM PLAN_TABLE ;
+
+
+SELECT * 
+  FROM emp
+ WHERE job = 'CLERK' ; 
+
+SELECT * 
+  FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR) ; 
+  
+SELECT * 
+  FROM V$SESSION 
+ WHERE USERNAME = 'SQLT01' ; 
+
+SELECT /*+ TEST  */ * 
+  FROM emp
+ WHERE job = 'CLERK' ; 
+
+SELECT * 
+  FROM V$SQL 
+ WHERE SQL_TEXT LIKE 'SELECT /*+ TEST %' ;
+
+SELECT * 
+  FROM V$SQL_PLAN 
+WHERE SQL_ID = 'g6zx1sh50447a' ; 
+
+SELECT * 
+  FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('g6zx1sh50447a',0)) ; 
+
+

@@ -1,0 +1,318 @@
+-- Clustering Factor 이해 (인덱스 선택 비용)
+
+BEGIN 
+  DBMS_STATS.GATHER_TABLE_STATS(ownname       => USER
+                               ,tabname       => 'CUSTOMERS'
+                               ,method_opt    => 'FOR COLUMNS CUST_CITY SIZE 1' 
+                               ,no_invalidate => FALSE ) ; 
+END ; 
+/
+
+SELECT /*+ full(c) */ * 
+  FROM customers c
+ WHERE cust_city = 'Los Angeles'; 
+
+SELECT * 
+  FROM table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST +cost')) ;
+------------------------------------------------------------------------------------------------------
+| Id  | Operation         | Name      | Starts | E-Rows | Cost (%CPU)| A-Rows |   A-Time   | Buffers |
+------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT  |           |      1 |        |   405 (100)|    932 |00:00:00.01 |    1466 |
+|*  1 |  TABLE ACCESS FULL| CUSTOMERS |      1 |     90 |   405   (1)|    932 |00:00:00.01 |    1466 |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - filter("CUST_CITY"='Los Angeles')
+
+-- full table scan 사용, cost 405 
+-- 예상 90, 실제 932 행 검색 
+
+SELECT /*+ index(c(cust_city)) */ * 
+  FROM customers c
+ WHERE cust_city = 'Los Angeles'; 
+
+SELECT * 
+  FROM table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST +cost')) ;
+--------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | Cost (%CPU)| A-Rows |   A-Time   | Buffers |
+--------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT            |               |      1 |        |    85 (100)|    932 |00:00:00.01 |     672 |
+|   1 |  TABLE ACCESS BY INDEX ROWID| CUSTOMERS     |      1 |     90 |    85   (0)|    932 |00:00:00.01 |     672 |
+|*  2 |   INDEX RANGE SCAN          | CUSTS_CITY_IX |      1 |     90 |     1   (0)|    932 |00:00:00.01 |      15 |
+--------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   2 - access("CUST_CITY"='Los Angeles')
+
+-- index 사용, cost 85
+-- 예상 90, 실제 932 행 검색 
+-- 932개 행 검색을 위해 테이블 블록 650여개를 액세스 
+
+-- 힌트 없이 명령문을 실행한다면? 
+
+SELECT * 
+  FROM customers c
+ WHERE cust_city = 'Los Angeles'; 
+
+SELECT * 
+  FROM table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST +cost')) ;
+--------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | Cost (%CPU)| A-Rows |   A-Time   | Buffers |
+--------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT            |               |      1 |        |    85 (100)|    932 |00:00:00.01 |     671 |
+|   1 |  TABLE ACCESS BY INDEX ROWID| CUSTOMERS     |      1 |     90 |    85   (0)|    932 |00:00:00.01 |     671 |
+|*  2 |   INDEX RANGE SCAN          | CUSTS_CITY_IX |      1 |     90 |     1   (0)|    932 |00:00:00.01 |      15 |
+--------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   2 - access("CUST_CITY"='Los Angeles')
+
+-- cost가 낮은 인덱스 사용 
+
+-- 통계 수집 
+BEGIN 
+  DBMS_STATS.GATHER_TABLE_STATS(ownname       => USER
+                               ,tabname       => 'CUSTOMERS'
+                               ,method_opt    => 'FOR COLUMNS CUST_CITY SIZE AUTO' 
+                               ,no_invalidate => FALSE ) ; 
+END ; 
+/
+
+SELECT /*+ full(c) */ * 
+  FROM customers c
+ WHERE cust_city = 'Los Angeles'; 
+
+SELECT * 
+  FROM table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST +cost')) ;
+------------------------------------------------------------------------------------------------------
+| Id  | Operation         | Name      | Starts | E-Rows | Cost (%CPU)| A-Rows |   A-Time   | Buffers |
+------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT  |           |      1 |        |   405 (100)|    932 |00:00:00.01 |    1466 |
+|*  1 |  TABLE ACCESS FULL| CUSTOMERS |      1 |   1093 |   405   (1)|    932 |00:00:00.01 |    1466 |
+------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - filter("CUST_CITY"='Los Angeles')
+
+-- full table scan 사용, cost 405 
+-- 예상 1093 , 실제 932 행 검색 
+
+SELECT /*+ index(c(cust_city)) */ * 
+  FROM customers c
+ WHERE cust_city = 'Los Angeles'; 
+
+SELECT * 
+  FROM table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST +cost')) ;
+--------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | Cost (%CPU)| A-Rows |   A-Time   | Buffers |
+--------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT            |               |      1 |        |  1020 (100)|    932 |00:00:00.01 |     671 |
+|   1 |  TABLE ACCESS BY INDEX ROWID| CUSTOMERS     |      1 |   1093 |  1020   (0)|    932 |00:00:00.01 |     671 |
+|*  2 |   INDEX RANGE SCAN          | CUSTS_CITY_IX |      1 |   1093 |     4   (0)|    932 |00:00:00.01 |      15 |
+--------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   2 - access("CUST_CITY"='Los Angeles')
+
+-- 인덱스 사용, cost 1020 
+-- cluster factoring이 안 좋기 때문에 인덱스 사용 비용이 증가됨 
+
+SELECT * 
+  FROM customers c
+ WHERE cust_city = 'Los Angeles'; 
+
+SELECT * 
+  FROM table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST +cost')) ;
+------------------------------------------------------------------------------------------------------
+| Id  | Operation         | Name      | Starts | E-Rows | Cost (%CPU)| A-Rows |   A-Time   | Buffers |
+------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT  |           |      1 |        |   405 (100)|    932 |00:00:00.01 |    1466 |
+|*  1 |  TABLE ACCESS FULL| CUSTOMERS |      1 |   1093 |   405   (1)|    932 |00:00:00.01 |    1466 |
+------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter("CUST_CITY"='Los Angeles')
+
+-- 힌트 없이 명령문 실행 시 full table scan 사용 
+
+
+SELECT index_name, blevel, leaf_blocks, distinct_keys, clustering_factor 
+  FROM user_indexes 
+ WHERE index_name = 'CUSTS_CITY_IX' ;
+
+INDEX_NAME          BLEVEL LEAF_BLOCKS DISTINCT_KEYS CLUSTERING_FACTOR
+--------------- ---------- ----------- ------------- -----------------
+CUSTS_CITY_IX            1         161           620             51591
+
+-- custering_factor 값이 행 개수에 가까우면 조건에 만족하는 행이 많은 블록에 저장됨을 의미 
+
+CREATE TABLE custs2
+AS 
+SELECT * FROM customers 
+ORDER BY cust_city ; 
+
+CREATE INDEX custs2_ix01 ON custs2(cust_city) ;
+
+BEGIN 
+  DBMS_STATS.GATHER_TABLE_STATS(ownname       => USER
+                               ,tabname       => 'CUSTS2'
+                               ,method_opt    => 'FOR COLUMNS CUST_CITY SIZE 254' 
+                               ,no_invalidate => FALSE ) ; 
+END ; 
+/
+
+SELECT index_name, blevel, leaf_blocks, distinct_keys, clustering_factor 
+  FROM user_indexes 
+ WHERE index_name = 'CUSTS2_IX01' ;
+
+INDEX_NAME          BLEVEL LEAF_BLOCKS DISTINCT_KEYS CLUSTERING_FACTOR
+--------------- ---------- ----------- ------------- -----------------
+CUSTS2_IX01              1         161           620              1453
+
+-- custering_factor 값이 테이블 블록 개수에 가까우면 조건에 만족하는 행이 모여 저장됨을 의미 
+
+ 
+SELECT /*+ full(c) */ * 
+  FROM custs2 c
+ WHERE cust_city = 'Los Angeles'; 
+
+SELECT * 
+  FROM table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST +cost')) ;
+---------------------------------------------------------------------------------------------------
+| Id  | Operation         | Name   | Starts | E-Rows | Cost (%CPU)| A-Rows |   A-Time   | Buffers |
+---------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT  |        |      1 |        |   405 (100)|    932 |00:00:00.01 |    1467 |
+|*  1 |  TABLE ACCESS FULL| CUSTS2 |      1 |    874 |   405   (1)|    932 |00:00:00.01 |    1467 |
+---------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter("CUST_CITY"='Los Angeles')
+
+
+-- 비슷한 지표 결과
+
+
+SELECT /*+ index(c(cust_city)) */ * 
+  FROM custs2 c
+ WHERE cust_city = 'Los Angeles'; 
+
+SELECT * 
+  FROM table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST +cost')) ;
+------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name        | Starts | E-Rows | Cost (%CPU)| A-Rows |   A-Time   | Buffers |
+------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT            |             |      1 |        |    26 (100)|    932 |00:00:00.01 |      50 |
+|   1 |  TABLE ACCESS BY INDEX ROWID| CUSTS2      |      1 |    874 |    26   (0)|    932 |00:00:00.01 |      50 |
+|*  2 |   INDEX RANGE SCAN          | CUSTS2_IX01 |      1 |    874 |     3   (0)|    932 |00:00:00.01 |      15 |
+------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("CUST_CITY"='Los Angeles')
+
+
+-- cost가 26으로 변경됨 
+-- I/O도 최적화 
+
+SELECT * 
+  FROM custs2 c
+ WHERE cust_city = 'Los Angeles'; 
+
+SELECT * 
+  FROM table(dbms_xplan.display_cursor(null,null,'ALLSTATS LAST +cost')) ;
+------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name        | Starts | E-Rows | Cost (%CPU)| A-Rows |   A-Time   | Buffers |
+------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT            |             |      1 |        |    26 (100)|    932 |00:00:00.01 |      50 |
+|   1 |  TABLE ACCESS BY INDEX ROWID| CUSTS2      |      1 |    874 |    26   (0)|    932 |00:00:00.01 |      50 |
+|*  2 |   INDEX RANGE SCAN          | CUSTS2_IX01 |      1 |    874 |     3   (0)|    932 |00:00:00.01 |      15 |
+------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("CUST_CITY"='Los Angeles')
+
+-- 힌트 없이 실행해도 인덱스 사용
+
+
+TRUNCATE TABLE customers ;
+
+INSERT /*+ APPEND */ INTO customers 
+SELECT * FROM custs2
+ORDER BY cust_city ;
+
+BEGIN 
+  DBMS_STATS.GATHER_TABLE_STATS(ownname       => USER
+                               ,tabname       => 'CUSTOMERS'
+                               ,method_opt    => 'FOR COLUMNS CUST_CITY SIZE 254' 
+                               ,no_invalidate => FALSE ) ; 
+END ; 
+/
+
+DROP TABLE custs2 PURGE ;
+
+SELECT * 
+  FROM customers c
+ WHERE cust_city = 'Los Angeles'; 
+@xplan
+-------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+-------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT            |               |      1 |        |    932 |00:00:00.01 |      49 |
+|   1 |  TABLE ACCESS BY INDEX ROWID| CUSTOMERS     |      1 |    874 |    932 |00:00:00.01 |      49 |
+|*  2 |   INDEX RANGE SCAN          | CUSTS_CITY_IX |      1 |    874 |    932 |00:00:00.01 |      14 |
+-------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   2 - access("CUST_CITY"='Los Angeles')
+
+-------------------------------------------------------
+
+CREATE INDEX cust_ix01 ON customers(cust_gender, cust_year_of_birth) ; 
+
+SELECT cust_gender, cust_year_of_birth, ROWID 
+  FROM CUSTOMERS 
+ WHERE NOT (cust_gender IS NULL 
+   AND cust_year_of_birth IS NULL )
+ORDER BY 1, 2, 3 ; 
+
+
+SELECT cust_gender, cust_year_of_birth, ROWID 
+  FROM CUSTOMERS SAMPLE(0.1)
+ WHERE NOT (cust_gender IS NULL 
+   AND cust_year_of_birth IS NULL )
+ORDER BY 1, 2, 3 ; 
+
+-------------------------------------------------------
+
+CD C:\LABS
+SQLPLUS /NOLOG 
+
+@ON_OPT
+SELECT c.cust_id, 
+		c.cust_last_name, 
+		c.cust_city, 
+		c.cust_credit_limit, 
+		s.prod_id, 
+		s.time_id, 
+		s.quantity_sold
+ FROM customers c, sales s 
+ WHERE c.cust_id    = s.cust_id  
+   AND c.cust_city  = 'Los Angeles'
+   AND c.cust_credit_limit > 3000
+   AND s.time_id BETWEEN TO_DATE('1999/01/01','YYYY/MM/DD') 
+					 AND TO_DATE('1999/12/31','YYYY/MM/DD') ;
+
+@OFF_OPT
+
+
+
+
+
+

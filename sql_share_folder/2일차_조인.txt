@@ -1,0 +1,211 @@
+JOIN은 다중 테이블의 데이터를 동시에 검색하는 방법이다. 
+
+이 정의는 틀린 표현은 아니지만, 
+정의 그대로 받아들여 문장을 작성한다면 업무가 복잡해지고, 
+요구사항이 많아질수록 잘못된 문장을 작성할 확률이 높아진다. 
+
+조인은 두 집합의 행을 조인 조건으로 연결하여 하나의 행을 만드는 작업이다. 
+두 집합 중 하나의 집합을 먼저 액세스하여 후보행을 선택하고, 
+두 번째 집합에 조인 조건에 만족하는 행을 찾아 연결한다. 
+그리고 이 작업이 더 이상 조인 조건에 만족하는 행이 없을 때까지 반복된다. 
+모든 후보행에 대해 이 작업이 수행되면 결국 조인 결과는 M 집합의 행 개수만큼 검색된다. 
+
+SELECT *
+  FROM emp  e 
+  JOIN dept d 
+    ON d.deptno = e.deptno ;
+
+-----------------------------------------------------------
+
+-- Inner Join
+
+SELECT e.empno, e.ename, e.job, e.sal, d.deptno, d.dname, d.loc
+  FROM dept d 
+      ,emp  e 
+ WHERE d.deptno = e.deptno 
+   AND d.dname  = 'SALES' 
+   AND e.sal   >= 1500
+ORDER BY e.sal ;
+
+SELECT e.empno, e.ename, e.job, e.sal, d.deptno, d.dname, d.loc
+  FROM dept d 
+  JOIN emp  e 
+    ON d.deptno = e.deptno 
+ WHERE d.dname  = 'SALES' 
+   AND e.sal   >= 1500 
+ORDER BY e.sal ;
+
+-- Non-Equi Join 
+
+SELECT j.grade_level, j.lowest_sal, j.highest_sal, e.employee_id, e.last_name, e.salary, e.department_id 
+  FROM job_grades j 
+      ,employees  e 
+ WHERE e.salary BETWEEN j.lowest_sal AND j.highest_sal ;
+ 
+SELECT j.grade_level, j.lowest_sal, j.highest_sal, e.employee_id, e.last_name, e.salary, e.department_id 
+  FROM job_grades j 
+  JOIN employees  e 
+    ON E.SALARY >=  j.lowest_sal 
+   AND E.SALARY <=  j.highest_sal ; 
+
+-- Self Join 
+
+SELECT e.ename || ' reports to ' || m.ename 
+  FROM emp e 
+      ,emp m 
+ WHERE e.mgr = m.empno ;
+
+SELECT e.ename || ' reports to ' || m.ename 
+  FROM emp e 
+  JOIN emp m 
+    ON e.mgr = m.empno ;
+
+-- Outer Join
+
+SELECT d.deptno AS dept_deptno, d.dname, d.loc, 
+       e.empno, e.ename, e.sal, e.deptno AS emp_deptno
+  FROM dept d
+      ,emp  e
+ WHERE  e.deptno (+)  = d.deptno  ;
+
+SELECT d.deptno AS dept_deptno, d.dname, d.loc, 
+       e.empno, e.ename, e.sal, e.deptno AS emp_deptno
+  FROM dept d
+      ,emp  e
+ WHERE d.deptno = e.deptno (+) ;
+
+SELECT d.deptno AS dept_deptno, d.dname, d.loc, 
+       e.empno, e.ename, e.sal, e.deptno AS emp_deptno
+  FROM dept d LEFT OUTER JOIN emp e
+    ON d.deptno = e.deptno ;
+
+SELECT d.deptno AS dept_deptno, d.dname, d.loc, 
+       e.empno, e.ename, e.sal, e.deptno AS emp_deptno
+  FROM dept d LEFT JOIN emp e
+    ON d.deptno = e.deptno ;
+
+-- Full Outer Join 
+
+SELECT d.department_id, d.department_name, e.employee_id, e.last_name, e.department_id 
+  FROM departments d 
+  FULL OUTER JOIN
+       employees   e 
+    ON d.department_id = e.department_id ; 
+
+SELECT d.department_id, d.department_name, e.employee_id, e.last_name, e.department_id 
+  FROM departments d 
+      ,employees   e 
+ WHERE d.department_id (+) = e.department_id 
+UNION 
+SELECT d.department_id, d.department_name, e.employee_id, e.last_name, e.department_id 
+  FROM departments d 
+      ,employees   e 
+ WHERE d.department_id = e.department_id (+) ; 
+
+
+----------------------------------------------------------------------------
+
+ANSI OUTER JOIN에서 조건절의 위치 
+
+1. LEFT OUTER JOIN에서 오른쪽 집합의 조건을 ON 절에 추가 
+행을 필터링하는 조건이며, 오른쪽 집합에 일반 조건을 먼저 비교하고 OUTER Join을 진행한다. 
+즉, 조건을 먼저 비교할 것인지, OUTER JOIN을 먼저 수행할 것인지의 차이가 발생한다. 
+아래 문장에서는 3000을 초과하는 급여를 받는 사원과, 
+3000을 초과하는 사원이 없는 부서 정보를 함께 검색한 것이다. 
+
+SELECT * 
+  FROM dept  d LEFT OUTER JOIN emp  e 
+    ON d.deptno = e.deptno 
+   AND e.sal    > 3000 ;
+
+SELECT * 
+  FROM dept  d 
+      ,emp   e 
+ WHERE e.deptno (+) = d.deptno 
+   AND e.sal    (+) > 3000 ;
+
+SELECT * 
+  FROM dept  d LEFT OUTER JOIN (SELECT * FROM emp
+                                WHERE sal > 3000)  e 
+    ON d.deptno = e.deptno ;
+
+
+2. LEFT OUTER JOIN에서 오른쪽 집합의 조건을 WHERE 절에 추가 
+행을 필터링하는 조건이며, OUTER Join을 먼저 수행하고, 일반 조건을 비교한다. 
+때문에 OUTER Join 때문에 생성된 NULL을 검색할 수 있도록 조건을 주지 않는다면 
+INNER JOIN 결과를 수행한다. 
+
+SELECT * 
+  FROM dept  d LEFT OUTER JOIN emp  e 
+    ON d.deptno = e.deptno 
+ WHERE e.sal    > 3000 
+    OR e.sal IS NULL ;
+
+SELECT * 
+  FROM dept  d 
+      ,emp   e 
+ WHERE e.deptno (+) = d.deptno 
+   AND (e.sal   > 3000 OR e.sal IS NULL );
+
+SELECT * 
+  FROM (SELECT * 
+          FROM dept  d LEFT OUTER JOIN emp  e 
+            ON d.deptno = e.deptno) 
+ WHERE sal    > 3000 
+    OR sal IS NULL ;
+
+3. LEFT OUTER JOIN에서 왼쪽 집합의 조건을 ON 절에 추가 
+행 필터링 목적이 아닌 조인 대상 여부를 확인하기 위한 조건이다. 
+조건에 만족하지 않아도 행이 필터링 되지 않는다. 
+LEFT OUTER JOIN을 진행하고 있기 때문에 왼쪽의 행은 검색된다. 
+
+SELECT * 
+  FROM dept  d LEFT OUTER JOIN emp  e 
+    ON d.deptno = e.deptno 
+   AND d.dname  = 'ACCOUNTING' ; 
+
+SELECT * 
+  FROM dept  d LEFT OUTER JOIN emp  e 
+    ON DECODE(D.DNAME,'ACCOUNTING',d.deptno) = e.deptno ; 
+
+SELECT * 
+  FROM dept  d , emp  e 
+ WHERE DECODE(D.DNAME,'ACCOUNTING',d.deptno) = e.deptno (+) ; 
+
+SELECT * 
+  FROM dept  d LEFT OUTER JOIN emp  e 
+    ON d.deptno = e.deptno 
+   AND d.dname  IN ('ACCOUNTING','OPERATIONS') ;
+
+SELECT * 
+  FROM dept  d LEFT OUTER JOIN emp  e 
+    ON CASE WHEN d.dname  IN ('ACCOUNTING','OPERATIONS') 
+         THEN D.DEPTNO END = E.DEPTNO ;
+
+SELECT * 
+  FROM dept  d 
+      ,emp   e 
+ WHERE CASE WHEN d.dname  IN ('ACCOUNTING','OPERATIONS') 
+         THEN D.DEPTNO END = E.DEPTNO (+) ;
+
+4. LEFT OUTER JOIN에서 왼쪽 집합의 조건을 WHERE 절에 추가 
+행 필터링 목적의 조건이다. 왼쪽 집합에 조건에 만족하는 행만 LEFT OUTER JOIN에 참여한다. 
+
+SELECT * 
+  FROM dept  d LEFT OUTER JOIN emp  e 
+    ON d.deptno = e.deptno 
+ WHERE d.dname  IN ('ACCOUNTING','OPERATIONS') ;
+
+SELECT * 
+  FROM dept  d 
+      ,emp   e 
+ WHERE e.deptno (+) = d.deptno 
+   AND d.dname  IN ('ACCOUNTING','OPERATIONS') ; 
+       
+
+
+
+
+
+
+

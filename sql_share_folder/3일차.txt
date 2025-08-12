@@ -1,0 +1,372 @@
+SELECT * FROM TACCOUNT ;
+SELECT * FROM TPID ;
+SELECT * FROM TCID ;
+
+SELECT * 
+  FROM TACCOUNT TA 
+  JOIN TPID     TP 
+    ON TA.LNID   = TP.LNID 
+   AND TA.ID_TYP = '1' ; 
+   
+SELECT * 
+  FROM TACCOUNT TA 
+  JOIN TCID     TC 
+    ON TA.LNID   = TC.LNID 
+   AND TA.ID_TYP = '2' ; 
+
+-----------------------------------
+
+SELECT * 
+  FROM TACCOUNT TA 
+      ,TPID     TP 
+      ,TCID     TC 
+ WHERE TA.LNID = TP.LNID 
+   AND TA.LNID = TC.LNID
+   AND TA.LNACT = '201997' ; 
+
+SELECT * 
+  FROM TACCOUNT TA 
+      ,TPID     TP 
+      ,TCID     TC 
+ WHERE TA.LNID = TP.LNID (+)
+   AND TA.LNID = TC.LNID (+)
+   AND TA.LNACT = '201997' ; 
+
+SELECT DECODE(TA.ID_TYP,'1',TP.GENDER)
+       ,TA.*, TP.*, TC.* 
+  FROM TACCOUNT TA 
+      ,TPID     TP 
+      ,TCID     TC 
+ WHERE TA.LNID = TP.LNID (+)
+   AND TA.LNID = TC.LNID (+)
+   AND TA.LNACT = '200265' ; 
+
+----------------------------------------------------
+답안1.
+WITH ti AS (SELECT lnid, '1' AS id_typ, bthday, gender, score, NULL AS grade
+              FROM tpid 
+            UNION ALL 
+            SELECT lnid, '2' AS id_typ, bthday, NULL, NULL, grade
+              FROM tcid) 
+SELECT ti.*, ta.lnact, ta.lnact_seq, ta.ln_dt, ta.ln_amt, ta.exp_dt 
+  FROM taccount ta 
+  JOIN ti
+    ON ta.lnid   = ti.lnid 
+   AND ta.id_typ = ti.id_typ 
+ WHERE ta.lnact  = '201997'
+ORDER BY ta.lnact, ta.lnact_seq ;
+@XPLAN 
+---------------------------------------------------------------------------------------------------------
+| Id  | Operation                      | Name         | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+---------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT               |              |      1 |        |      2 |00:00:00.01 |      13 |
+|   1 |  NESTED LOOPS                  |              |      1 |      1 |      2 |00:00:00.01 |      13 |
+|   2 |   TABLE ACCESS BY INDEX ROWID  | TACCOUNT     |      1 |      2 |      2 |00:00:00.01 |       3 |
+|*  3 |    INDEX RANGE SCAN            | TACCT_IX01   |      1 |      2 |      2 |00:00:00.01 |       2 |
+|*  4 |   VIEW                         |              |      2 |      1 |      2 |00:00:00.01 |      10 |
+|   5 |    UNION ALL PUSHED PREDICATE  |              |      2 |        |      2 |00:00:00.01 |      10 |
+|   6 |     TABLE ACCESS BY INDEX ROWID| TPID         |      2 |      1 |      0 |00:00:00.01 |       4 |
+|*  7 |      INDEX RANGE SCAN          | TPID_LNID_IX |      2 |      1 |      0 |00:00:00.01 |       4 |
+|   8 |     TABLE ACCESS BY INDEX ROWID| TCID         |      2 |      1 |      2 |00:00:00.01 |       6 |
+|*  9 |      INDEX RANGE SCAN          | TCID_LNID_IX |      2 |      1 |      2 |00:00:00.01 |       4 |
+---------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   3 - access("TA"."LNACT"='201997')
+   4 - filter("TA"."ID_TYP"="TI"."ID_TYP")
+   7 - access("LNID"="TA"."LNID")
+   9 - access("LNID"="TA"."LNID")
+
+답안2.
+SELECT ta.lnid 
+      ,ta.id_typ
+      ,NVL(tp.bthday, tc.bthday) AS BTHDAY 
+      ,tp.gender
+      ,tp.score
+      ,tc.grade, 
+       ta.lnact, ta.lnact_seq, ta.ln_dt, ta.ln_amt, ta.exp_dt 
+  FROM taccount ta 
+  LEFT OUTER JOIN tpid   tp 
+    ON ta.lnid   = tp.lnid 
+   AND ta.id_typ = '1' 
+  LEFT OUTER JOIN tcid   tc 
+    ON ta.lnid   = tc.lnid 
+   AND ta.id_typ = '2' 
+ WHERE ta.lnact = '201997' 
+ORDER BY ta.lnact, ta.lnact_seq ;
+@XPLAN 
+--------------------------------------------------------------------------------------------------------
+| Id  | Operation                     | Name         | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+--------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT              |              |      1 |        |      2 |00:00:00.01 |      12 |
+|   1 |  NESTED LOOPS OUTER           |              |      1 |      2 |      2 |00:00:00.01 |      12 |
+|   2 |   NESTED LOOPS OUTER          |              |      1 |      2 |      2 |00:00:00.01 |       7 |
+|   3 |    TABLE ACCESS BY INDEX ROWID| TACCOUNT     |      1 |      2 |      2 |00:00:00.01 |       3 |
+|*  4 |     INDEX RANGE SCAN          | TACCT_IX01   |      1 |      2 |      2 |00:00:00.01 |       2 |
+|   5 |    TABLE ACCESS BY INDEX ROWID| TPID         |      2 |      1 |      0 |00:00:00.01 |       4 |
+|*  6 |     INDEX RANGE SCAN          | TPID_LNID_IX |      2 |      1 |      0 |00:00:00.01 |       4 |
+|   7 |   TABLE ACCESS BY INDEX ROWID | TCID         |      2 |      1 |      2 |00:00:00.01 |       5 |
+|*  8 |    INDEX RANGE SCAN           | TCID_LNID_IX |      2 |      1 |      2 |00:00:00.01 |       4 |
+--------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   4 - access("TA"."LNACT"='201997')
+   6 - access("TA"."LNID"="TP"."LNID")
+       filter("TA"."ID_TYP"=CASE  WHEN ("TP"."LNID" IS NOT NULL) THEN '1' ELSE '1' END )
+   8 - access("TA"."LNID"="TC"."LNID")
+       filter("TA"."ID_TYP"=CASE  WHEN ("TC"."LNID" IS NOT NULL) THEN '2' ELSE '2' END )
+ 
+
+답안3.
+SELECT ta.lnid 
+      ,ta.id_typ
+      ,NVL(tp.bthday, tc.bthday) AS BTHDAY 
+      ,tp.gender
+      ,tp.score
+      ,tc.grade, 
+       ta.lnact, ta.lnact_seq, ta.ln_dt, ta.ln_amt, ta.exp_dt 
+  FROM taccount ta 
+  LEFT OUTER JOIN tpid   tp 
+    ON DECODE(ta.id_typ,'1',ta.lnid)   = tp.lnid 
+  LEFT OUTER JOIN tcid   tc 
+    ON DECODE(ta.id_typ,'2',ta.lnid)   = tc.lnid 
+ WHERE ta.lnact = '201997' 
+ORDER BY ta.lnact, ta.lnact_seq ;
+@XPLAN 
+--------------------------------------------------------------------------------------------------------
+| Id  | Operation                     | Name         | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+--------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT              |              |      1 |        |      2 |00:00:00.01 |       8 |
+|   1 |  NESTED LOOPS OUTER           |              |      1 |      2 |      2 |00:00:00.01 |       8 |
+|   2 |   NESTED LOOPS OUTER          |              |      1 |      2 |      2 |00:00:00.01 |       3 |
+|   3 |    TABLE ACCESS BY INDEX ROWID| TACCOUNT     |      1 |      2 |      2 |00:00:00.01 |       3 |
+|*  4 |     INDEX RANGE SCAN          | TACCT_IX01   |      1 |      2 |      2 |00:00:00.01 |       2 |
+|   5 |    TABLE ACCESS BY INDEX ROWID| TPID         |      2 |      1 |      0 |00:00:00.01 |       0 |
+|*  6 |     INDEX RANGE SCAN          | TPID_LNID_IX |      2 |      1 |      0 |00:00:00.01 |       0 |
+|   7 |   TABLE ACCESS BY INDEX ROWID | TCID         |      2 |      1 |      2 |00:00:00.01 |       5 |
+|*  8 |    INDEX RANGE SCAN           | TCID_LNID_IX |      2 |      1 |      2 |00:00:00.01 |       4 |
+--------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   4 - access("TA"."LNACT"='201997')
+   6 - access("TP"."LNID"=DECODE("TA"."ID_TYP",'1',"TA"."LNID"))
+   8 - access("TC"."LNID"=DECODE("TA"."ID_TYP",'2',"TA"."LNID"))
+ 
+답안4.
+SELECT ta.lnid 
+      ,ta.id_typ
+      ,NVL(tp.bthday, tc.bthday) AS BTHDAY 
+      ,tp.gender
+      ,tp.score
+      ,tc.grade, 
+       ta.lnact, ta.lnact_seq, ta.ln_dt, ta.ln_amt, ta.exp_dt 
+  FROM taccount ta 
+      ,tpid     tp 
+      ,tcid     tc 
+ WHERE DECODE(ta.id_typ,'1',ta.lnid)   = tp.lnid (+)
+   AND DECODE(ta.id_typ,'2',ta.lnid)   = tc.lnid (+)
+   AND ta.lnact = '201997' 
+ORDER BY ta.lnact, ta.lnact_seq ;
+@XPLAN 
+--------------------------------------------------------------------------------------------------------
+| Id  | Operation                     | Name         | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+--------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT              |              |      1 |        |      2 |00:00:00.01 |       8 |
+|   1 |  NESTED LOOPS OUTER           |              |      1 |      2 |      2 |00:00:00.01 |       8 |
+|   2 |   NESTED LOOPS OUTER          |              |      1 |      2 |      2 |00:00:00.01 |       3 |
+|   3 |    TABLE ACCESS BY INDEX ROWID| TACCOUNT     |      1 |      2 |      2 |00:00:00.01 |       3 |
+|*  4 |     INDEX RANGE SCAN          | TACCT_IX01   |      1 |      2 |      2 |00:00:00.01 |       2 |
+|   5 |    TABLE ACCESS BY INDEX ROWID| TPID         |      2 |      1 |      0 |00:00:00.01 |       0 |
+|*  6 |     INDEX RANGE SCAN          | TPID_LNID_IX |      2 |      1 |      0 |00:00:00.01 |       0 |
+|   7 |   TABLE ACCESS BY INDEX ROWID | TCID         |      2 |      1 |      2 |00:00:00.01 |       5 |
+|*  8 |    INDEX RANGE SCAN           | TCID_LNID_IX |      2 |      1 |      2 |00:00:00.01 |       4 |
+--------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   4 - access("TA"."LNACT"='201997')
+   6 - access("TP"."LNID"=DECODE("TA"."ID_TYP",'1',"TA"."LNID"))
+   8 - access("TC"."LNID"=DECODE("TA"."ID_TYP",'2',"TA"."LNID"))
+
+-----------------------------------------------------------------------------------------------------
+ 
+SELECT * 
+  FROM DEPT D 
+  LEFT OUTER JOIN EMP E 
+    ON D.DEPTNO = E.DEPTNO 
+   AND D.DNAME = LLLLL
+  LEFT OUTER JOIN EMP E2
+    ON D.DEPTNO = E.COL1 
+
+-----------------------------------------------------------------------------------------------------
+ 
+SELECT DEPTNO, SUM(SAL)
+  FROM EMP 
+ WHERE JOB > 'A' 
+  GROUP BY DEPTNO ; 
+
+SELECT DEPTNO, SUM(SAL)
+  FROM EMP 
+  GROUP BY DEPTNO 
+ HAVING DEPTNO = 10  ; 
+
+SELECT SUM(SAL)
+  FROM EMP 
+ HAVING AVG(SAL) > 2000 ; 
+   
+-----------------------------------------------------------------------------------------------------
+ 
+SELECT deptno, JOB, SUM(sal) AS sum_sal
+  FROM emp 
+ GROUP BY ROLLUP(deptno, JOB) ; 
+
+(DEPTNO,JOB)
+(DEPTNO)
+()
+
+SELECT deptno, JOB, SUM(sal) AS sum_sal
+  FROM emp 
+ GROUP BY CUBE(deptno, JOB) ; 
+
+(DEPTNO,JOB)
+(DEPTNO) (JOB)
+()
+
+SELECT deptno, JOB, MGR, SUM(sal) AS sum_sal
+  FROM emp 
+ GROUP BY CUBE(deptno, JOB, MGR) ; 
+
+(DEPTNO,JOB,MGR)
+(DEPTNO,JOB) (DEPTNO, MGR) (JOB, MGR) 
+(DEPTNO) (JOB) (MGR) 
+()
+  
+SELECT deptno, JOB, MGR, SUM(sal) AS sum_sal
+  FROM emp 
+ GROUP BY ROLLUP(deptno, JOB, MGR) ; 
+
+(DEPTNO,JOB,MGR)
+(DEPTNO,JOB) 
+(DEPTNO) 
+()
+
+SELECT deptno, JOB, MGR, SUM(sal) AS sum_sal
+      ,GROUPING(DEPTNO), GROUPING(JOB), GROUPING(MGR) 
+      ,GROUPING_ID(DEPTNO,JOB,MGR)
+  FROM emp 
+ GROUP BY CUBE(deptno, JOB, MGR) ; 
+
+  
+(DEPTNO, JOB) (DEPTNO, MGR)
+
+
+SELECT deptno, JOB, MGR, SUM(sal) AS sum_sal
+      ,GROUPING(DEPTNO), GROUPING(JOB), GROUPING(MGR) 
+      ,GROUPING_ID(DEPTNO,JOB,MGR)
+  FROM emp 
+ GROUP BY CUBE(deptno, JOB, MGR) 
+ HAVING GROUPING(DEPTNO) = 0 
+    AND GROUPING(JOB)    = 0 
+    AND GROUPING(MGR)    = 1 ;
+
+SELECT deptno, JOB, MGR, SUM(sal) AS sum_sal
+      ,GROUPING(DEPTNO), GROUPING(JOB), GROUPING(MGR) 
+      ,GROUPING_ID(DEPTNO,JOB,MGR)
+  FROM emp 
+ GROUP BY CUBE(deptno, JOB, MGR) 
+ HAVING (GROUPING(DEPTNO) = 0 
+    AND GROUPING(JOB)    = 1 
+    AND GROUPING(MGR)    = 0)
+    OR (GROUPING(DEPTNO) = 0 
+    AND GROUPING(JOB)    = 0 
+    AND GROUPING(MGR)    = 1) ; 
+
+SELECT deptno, JOB, MGR, SUM(sal) AS sum_sal
+      ,GROUPING(DEPTNO), GROUPING(JOB), GROUPING(MGR) 
+      ,GROUPING_ID(DEPTNO,JOB,MGR)
+  FROM emp 
+ GROUP BY CUBE(deptno, JOB, MGR) 
+ HAVING GROUPING_ID(DEPTNO,JOB,MGR) IN (1,2) ; 
+
+SELECT deptno, JOB, MGR, SUM(sal) AS sum_sal
+      ,GROUPING_ID(DEPTNO,JOB,MGR)
+  FROM emp 
+ GROUP BY GROUPING SETS((deptno, JOB), (DEPTNO,MGR)) ; 
+
+
+SELECT deptno, JOB, MGR, SUM(sal) AS sum_sal
+  FROM emp 
+ GROUP BY deptno, ROLLUP(JOB, MGR) ; 
+
+
+SELECT EMPNO, ENAME, SUM(SAL)
+  FROM EMP 
+  GROUP BY ROLLUP((EMPNO, ENAME)) ;
+
+SELECT SUM(SAL)
+  FROM EMP 
+ GROUP BY 'A' ; 
+
+SELECT SUM(SAL), GROUPING_ID('A')
+      ,DECODE(GROUPING_ID('A'),0,SUM(SAL),1,AVG(SAL))
+  FROM EMP 
+ GROUP BY ROLLUP('A') ; 
+
+SELECT DECODE(GROUPING_ID('A'),0,SUM(SAL),1,AVG(SAL))
+  FROM EMP 
+ GROUP BY ROLLUP('A') ; 
+
+
+--------------------------------
+SELECT deptno, CASE job WHEN 'ANALYST'   THEN SUM(sal) 
+                        WHEN 'CLERK'     THEN SUM(sal)
+                        WHEN 'MANAGER'   THEN SUM(sal)
+                        WHEN 'PRESIDENT' THEN SUM(sal)
+                        WHEN 'SALESMAN'  THEN SUM(sal) END  
+  FROM emp 
+ GROUP BY deptno 
+ ORDER BY deptno ;
+
+SELECT deptno, CASE job WHEN 'ANALYST'   THEN SUM(sal) END  AS analyst, 
+               CASE job WHEN 'CLERK'     THEN SUM(sal) END  AS clerk, 
+               CASE job WHEN 'MANAGER'   THEN SUM(sal) END  AS manager,
+               CASE job WHEN 'PRESIDENT' THEN SUM(sal) END  AS president, 
+               CASE job WHEN 'SALESMAN'  THEN SUM(sal) END  AS salesman
+  FROM emp 
+ GROUP BY deptno 
+ ORDER BY deptno ;
+
+
+SELECT deptno, SUM(CASE job WHEN 'ANALYST'   THEN sal END)  AS analyst, 
+               SUM(CASE job WHEN 'CLERK'     THEN sal END)  AS clerk, 
+               SUM(CASE job WHEN 'MANAGER'   THEN sal END)  AS manager,
+               SUM(CASE job WHEN 'PRESIDENT' THEN sal END)  AS president, 
+               SUM(CASE job WHEN 'SALESMAN'  THEN sal END)  AS salesman
+  FROM emp 
+ GROUP BY deptno 
+ ORDER BY deptno ;
+
+SELECT *
+  FROM ( SELECT deptno, job, sal 
+           FROM emp ) 
+ PIVOT (SUM(sal) AS SUM,COUNT(SAL) AS CNT FOR job IN ('ANALYST'   AS analyst, 
+                                                      'CLERK'     AS clerk,
+                                                      'MANAGER'   AS manager, 
+                                                      'PRESIDENT' AS president, 
+                                                      'SALESMAN'  AS salesman)) 
+ORDER BY deptno ;
+	
+
+SELECT deptno, SUM(CASE job WHEN 'ANALYST'   THEN sal END)  AS analyst, 
+               SUM(CASE job WHEN 'CLERK'     THEN sal END)  AS clerk, 
+               SUM(CASE job WHEN 'MANAGER'   THEN sal END)  AS manager,
+               SUM(CASE job WHEN 'PRESIDENT' THEN sal END)  AS president, 
+               SUM(CASE job WHEN 'SALESMAN'  THEN sal END)  AS salesman, 
+               SUM(SAL)                                     AS TOTAL
+  FROM emp 
+ GROUP BY ROLLUP(deptno) 
+ ORDER BY deptno ;
+
+
+
+
+   

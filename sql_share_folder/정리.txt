@@ -1,0 +1,356 @@
+--DROP TABLE SALES2 PURGE  ;
+CREATE TABLE SALES2 
+AS 
+SELECT S.*
+  FROM SALES S
+  CROSS JOIN
+  (SELECT ROWNUM 
+     FROM DUAL 
+	CONNECT BY LEVEL <= 6) ;
+
+CREATE INDEX SALE2_IX ON SALES2(CUST_ID) ;
+
+EXECUTE DBMS_STATS.GATHER_TABLE_STATS(USER,'SALES2') ;
+-----------------------------------------------------------	
+-- 고객별 가장 마지막에 구매한 이력을 검색  (전체)
+
+SELECT * 
+  FROM CUSTOMERS C 
+  JOIN (SELECT *
+		  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY CUST_ID ORDER BY TIME_ID DESC) AS RN
+					  ,S.*
+				  FROM SALES2 S)
+		 WHERE RN = 1) S 
+	ON C.CUST_ID = S.CUST_ID ;
+@XPLAN 	   
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                 | Name      | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT          |           |      1 |        |   7059 |00:00:03.39 |   28095 |   2663 |   1210 |       |       |          |         |
+|   1 |  MERGE JOIN               |           |      1 |   5513K|   7059 |00:00:03.39 |   28095 |   2663 |   1210 |       |       |          |         |
+|*  2 |   VIEW                    |           |      1 |   5513K|   7059 |00:00:03.33 |   26637 |   1210 |   1210 |       |       |          |         |
+|*  3 |    WINDOW SORT PUSHED RANK|           |      1 |   5513K|   7059 |00:00:03.33 |   26637 |   1210 |   1210 |    10M|  1265K|   97M (1)|      10M|
+|   4 |     TABLE ACCESS FULL     | SALES2    |      1 |   5513K|   5513K|00:00:00.14 |   26607 |      0 |      0 |       |       |          |         |
+|*  5 |   SORT JOIN               |           |   7059 |  55500 |   7059 |00:00:00.05 |    1458 |   1453 |      0 |    13M|  1393K|   11M (0)|         |
+|   6 |    TABLE ACCESS FULL      | CUSTOMERS |      1 |  55500 |  55500 |00:00:00.02 |    1458 |   1453 |      0 |       |       |          |         |
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   2 - filter("RN"=1)
+   3 - filter(ROW_NUMBER() OVER ( PARTITION BY "CUST_ID" ORDER BY INTERNAL_FUNCTION("TIME_ID") DESC )<=1)
+   5 - access("C"."CUST_ID"="from$_subquery$_003"."CUST_ID")
+       filter("C"."CUST_ID"="from$_subquery$_003"."CUST_ID")
+ 
+
+-- 고객별 가장 마지막에 구매한 이력을 검색 (200개 행)
+SELECT * 
+  FROM CUSTOMERS C 
+  JOIN (SELECT *
+		  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY CUST_ID ORDER BY TIME_ID DESC) AS RN
+					  ,S.*
+				  FROM SALES2 S)
+		 WHERE RN = 1) S 
+	ON C.CUST_ID = S.CUST_ID ;
+@XPLAN 	   
+------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                | Name   | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem |
+------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT         |        |      1 |        |    200 |00:00:03.41 |   26637 |  27612 |   1210 |       |       |          |
+|*  1 |  VIEW                    |        |      1 |   5513K|    200 |00:00:03.41 |   26637 |  27612 |   1210 |       |       |          |
+|*  2 |   WINDOW SORT PUSHED RANK|        |      1 |   5513K|    200 |00:00:03.41 |   26637 |  27612 |   1210 |    10M|  1265K|   97M (1)|
+|   3 |    TABLE ACCESS FULL     | SALES2 |      1 |   5513K|   5513K|00:00:00.30 |   26607 |  26595 |      0 |       |       |          |
+------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - filter("RN"=1)
+   2 - filter(ROW_NUMBER() OVER ( PARTITION BY "CUST_ID" ORDER BY INTERNAL_FUNCTION("TIME_ID") DESC )<=1)
+ 
+ 
+-- 고객별 가장 마지막에 구매한 이력을 검색 (200개 행, NL 조인)
+
+SELECT /*+ LEADING(C) USE_NL(S) */ * 
+  FROM CUSTOMERS C 
+  JOIN (SELECT *
+		  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY CUST_ID ORDER BY TIME_ID DESC) AS RN
+					  ,S.*
+				  FROM SALES2 S)
+		 WHERE RN = 1) S 
+	ON C.CUST_ID = S.CUST_ID ;
+@XPLAN 	   
+--------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                              | Name      | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                       |           |      1 |        |    200 |00:00:00.31 |     152K|    668 |       |       |          |
+|   1 |  NESTED LOOPS                          |           |      1 |   5513K|    200 |00:00:00.31 |     152K|    668 |       |       |          |
+|   2 |   TABLE ACCESS FULL                    | CUSTOMERS |      1 |  55500 |   1753 |00:00:00.01 |      50 |      0 |       |       |          |
+|*  3 |   VIEW PUSHED PREDICATE                |           |   1753 |      1 |    200 |00:00:00.31 |     152K|    668 |       |       |          |
+|   4 |    WINDOW SORT                         |           |   1753 |    781 |    183K|00:00:00.30 |     152K|    668 |   142K|   142K|  126K (0)|
+|   5 |     TABLE ACCESS BY INDEX ROWID BATCHED| SALES2    |   1753 |    781 |    185K|00:00:00.22 |     152K|    668 |       |       |          |
+|*  6 |      INDEX RANGE SCAN                  | SALE2_IX  |   1753 |    781 |    185K|00:00:00.06 |    3900 |    668 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   3 - filter("RN"=1)
+   6 - access("S"."CUST_ID"="C"."CUST_ID")
+
+
+-- 고객 정보와 함께 검색 (모든 행)
+SELECT /*+ LEADING(C) USE_NL(S) */ * 
+  FROM CUSTOMERS C 
+  JOIN (SELECT *
+		  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY CUST_ID ORDER BY TIME_ID DESC) AS RN
+					  ,S.*
+				  FROM SALES2 S)
+		 WHERE RN = 1) S 
+	ON C.CUST_ID = S.CUST_ID ;
+@XPLAN 	  		   
+--------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                              | Name      | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                       |           |      1 |        |   7059 |00:00:08.92 |    4542K|  11031 |       |       |          |
+|   1 |  NESTED LOOPS                          |           |      1 |   5513K|   7059 |00:00:08.92 |    4542K|  11031 |       |       |          |
+|   2 |   TABLE ACCESS FULL                    | CUSTOMERS |      1 |  55500 |  55500 |00:00:00.01 |    1470 |      0 |       |       |          |
+|*  3 |   VIEW PUSHED PREDICATE                |           |  55500 |      1 |   7059 |00:00:08.89 |    4541K|  11031 |       |       |          |
+|   4 |    WINDOW SORT                         |           |  55500 |    781 |   5513K|00:00:08.58 |    4541K|  11031 |   142K|   142K|  126K (0)|
+|   5 |     TABLE ACCESS BY INDEX ROWID BATCHED| SALES2    |  55500 |    781 |   5513K|00:00:06.26 |    4541K|  11031 |       |       |          |
+|*  6 |      INDEX RANGE SCAN                  | SALE2_IX  |  55500 |    781 |   5513K|00:00:01.28 |     120K|  11031 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   3 - filter("RN"=1)
+   6 - access("S"."CUST_ID"="C"."CUST_ID")
+		   
+-- 일반 조건 추가 (PK) 
+SELECT * 
+  FROM CUSTOMERS C 
+  JOIN (SELECT *
+		  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY CUST_ID ORDER BY TIME_ID DESC) AS RN
+					  ,S.*
+				  FROM SALES2 S)
+		 WHERE RN = 1) S 
+	ON C.CUST_ID = S.CUST_ID
+ WHERE C.CUST_ID = 100584 ;
+@XPLAN 
+-------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                              | Name        | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                       |             |      1 |        |      1 |00:00:00.01 |      12 |       |       |          |
+|   1 |  NESTED LOOPS                          |             |      1 |    781 |      1 |00:00:00.01 |      12 |       |       |          |
+|   2 |   TABLE ACCESS BY INDEX ROWID          | CUSTOMERS   |      1 |      1 |      1 |00:00:00.01 |       3 |       |       |          |
+|*  3 |    INDEX UNIQUE SCAN                   | CUSTS_ID_IX |      1 |      1 |      1 |00:00:00.01 |       2 |       |       |          |
+|*  4 |   VIEW                                 |             |      1 |    781 |      1 |00:00:00.01 |       9 |       |       |          |
+|*  5 |    WINDOW SORT PUSHED RANK             |             |      1 |    781 |      1 |00:00:00.01 |       9 |  2048 |  2048 | 2048  (0)|
+|   6 |     TABLE ACCESS BY INDEX ROWID BATCHED| SALES2      |      1 |    781 |     24 |00:00:00.01 |       9 |       |       |          |
+|*  7 |      INDEX RANGE SCAN                  | SALE2_IX    |      1 |    781 |     24 |00:00:00.01 |       3 |       |       |          |
+-------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   3 - access("C"."CUST_ID"=100584)
+   4 - filter("RN"=1)
+   5 - filter(ROW_NUMBER() OVER ( PARTITION BY "CUST_ID" ORDER BY INTERNAL_FUNCTION("TIME_ID") DESC )<=1)
+   7 - access("S"."CUST_ID"=100584)
+   
+   
+   
+-- 일반 조건 추가 (Non-PK) 
+SELECT * 
+  FROM CUSTOMERS C 
+  JOIN (SELECT *
+		  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY CUST_ID ORDER BY TIME_ID DESC) AS RN
+					  ,S.*
+				  FROM SALES2 S)
+		 WHERE RN = 1) S 
+	ON C.CUST_ID   = S.CUST_ID
+ WHERE C.CUST_CITY = 'Tokyo' ;
+@XPLAN    
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                             | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                      |               |      1 |        |     10 |00:00:03.28 |   26655 |   1212 |   1210 |       |       |          |         |
+|   1 |  MERGE JOIN                           |               |      1 |  69912 |     10 |00:00:03.28 |   26655 |   1212 |   1210 |       |       |          |         |
+|*  2 |   VIEW                                |               |      1 |   5513K|   6120 |00:00:03.28 |   26637 |   1210 |   1210 |       |       |          |         |
+|*  3 |    WINDOW SORT PUSHED RANK            |               |      1 |   5513K|   6120 |00:00:03.28 |   26637 |   1210 |   1210 |    10M|  1265K|   97M (1)|      10M|
+|   4 |     TABLE ACCESS FULL                 | SALES2        |      1 |   5513K|   5513K|00:00:00.14 |   26607 |      0 |      0 |       |       |          |         |
+|*  5 |   SORT JOIN                           |               |   6120 |     90 |     10 |00:00:00.01 |      18 |      2 |      0 |  4096 |  4096 | 4096  (0)|         |
+|   6 |    TABLE ACCESS BY INDEX ROWID BATCHED| CUSTOMERS     |      1 |     90 |     16 |00:00:00.01 |      18 |      2 |      0 |       |       |          |         |
+|*  7 |     INDEX RANGE SCAN                  | CUSTS_CITY_IX |      1 |     90 |     16 |00:00:00.01 |       2 |      2 |      0 |       |       |          |         |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   2 - filter("RN"=1)
+   3 - filter(ROW_NUMBER() OVER ( PARTITION BY "CUST_ID" ORDER BY INTERNAL_FUNCTION("TIME_ID") DESC )<=1)
+   5 - access("C"."CUST_ID"="from$_subquery$_003"."CUST_ID")
+       filter("C"."CUST_ID"="from$_subquery$_003"."CUST_ID")
+   7 - access("C"."CUST_CITY"='Tokyo')
+ 
+ 
+-- 일반 조건 추가 NL 조인 (Non-PK)  
+SELECT /*+ LEADING(C) USE_NL(S) */ * 
+  FROM CUSTOMERS C 
+  JOIN (SELECT *
+		  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY CUST_ID ORDER BY TIME_ID DESC) AS RN
+					  ,S.*
+				  FROM SALES2 S)
+		 WHERE RN = 1) S 
+	ON C.CUST_ID   = S.CUST_ID
+ WHERE C.CUST_CITY = 'Tokyo' ;
+@XPLAN  
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                              | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                       |               |      1 |        |     10 |00:00:00.02 |    9996 |       |       |          |
+|   1 |  NESTED LOOPS                          |               |      1 |   1589 |     10 |00:00:00.02 |    9996 |       |       |          |
+|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED  | CUSTOMERS     |      1 |     16 |     16 |00:00:00.01 |      18 |       |       |          |
+|*  3 |    INDEX RANGE SCAN                    | CUSTS_CITY_IX |      1 |     16 |     16 |00:00:00.01 |       2 |       |       |          |
+|*  4 |   VIEW PUSHED PREDICATE                |               |     16 |      1 |     10 |00:00:00.02 |    9978 |       |       |          |
+|   5 |    WINDOW SORT                         |               |     16 |    781 |  13422 |00:00:00.01 |    9978 |   124K|   124K|  110K (0)|
+|   6 |     TABLE ACCESS BY INDEX ROWID BATCHED| SALES2        |     16 |    781 |  13422 |00:00:00.01 |    9978 |       |       |          |
+|*  7 |      INDEX RANGE SCAN                  | SALE2_IX      |     16 |    781 |  13422 |00:00:00.01 |      63 |       |       |          |
+---------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   3 - access("C"."CUST_CITY"='Tokyo')
+   4 - filter("RN"=1)
+   7 - access("S"."CUST_ID"="C"."CUST_ID")
+ 
+-- 특정 고객 대상 	   
+SELECT *
+  FROM (SELECT * 
+          FROM CUSTOMERS 
+		 WHERE CUST_CITY = 'Tokyo') C 
+      ,LATERAL 
+       (SELECT * 
+	      FROM SALES2 
+		 WHERE CUST_ID = C.CUST_ID 
+ 		 ORDER BY TIME_ID DESC 
+         FETCH FIRST 1 ROWS ONLY) S ; 
+
+SELECT *
+  FROM (SELECT * 
+          FROM CUSTOMERS 
+		 WHERE CUST_CITY = 'Tokyo') C 
+  CROSS APPLY
+       (SELECT * 
+	      FROM SALES2 
+		 WHERE CUST_ID = C.CUST_ID 
+ 		 ORDER BY TIME_ID DESC 
+         FETCH FIRST 1 ROWS ONLY) S ; 
+@XPLAN 
+------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                               | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                        |                 |      1 |        |     10 |00:00:00.02 |    9996 |       |       |          |
+|   1 |  NESTED LOOPS                           |                 |      1 |     90 |     10 |00:00:00.02 |    9996 |       |       |          |
+|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED   | CUSTOMERS       |      1 |     90 |     16 |00:00:00.01 |      18 |       |       |          |
+|*  3 |    INDEX RANGE SCAN                     | CUSTS_CITY_IX   |      1 |     90 |     16 |00:00:00.01 |       2 |       |       |          |
+|   4 |   VIEW                                  | VW_LAT_4D09DA84 |     16 |      1 |     10 |00:00:00.02 |    9978 |       |       |          |
+|*  5 |    VIEW                                 |                 |     16 |      1 |     10 |00:00:00.02 |    9978 |       |       |          |
+|*  6 |     WINDOW SORT PUSHED RANK             |                 |     16 |    781 |     10 |00:00:00.02 |    9978 |  2048 |  2048 | 2048  (0)|
+|   7 |      TABLE ACCESS BY INDEX ROWID BATCHED| SALES2          |     16 |    781 |  13422 |00:00:00.01 |    9978 |       |       |          |
+|*  8 |       INDEX RANGE SCAN                  | SALE2_IX        |     16 |     99 |  13422 |00:00:00.01 |      63 |       |       |          |
+------------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   3 - access("CUST_CITY"='Tokyo')
+   5 - filter("from$_subquery$_005"."rowlimit_$$_rownumber"<=1)
+   6 - filter(ROW_NUMBER() OVER ( ORDER BY INTERNAL_FUNCTION("SALES2"."TIME_ID") DESC )<=1)
+   8 - access("CUST_ID"="CUSTOMERS"."CUST_ID")
+ 
+   
+-- 특정 고객 대상 (인덱스 추가)	   
+CREATE INDEX SALES2_IX02 ON SALES2(CUST_ID, TIME_ID) ; 
+
+SELECT *
+  FROM (SELECT * 
+          FROM CUSTOMERS 
+		 WHERE CUST_CITY = 'Tokyo') C 
+  CROSS APPLY
+       (SELECT /*+ INDEX(SALES2(CUST_ID, TIME_ID)) */ * 
+	      FROM SALES2 
+		 WHERE CUST_ID = C.CUST_ID 
+ 		 ORDER BY TIME_ID DESC 
+         FETCH FIRST 1 ROWS ONLY) S ; 
+@XPLAN  
+------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                               | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                        |                 |      1 |        |     10 |00:00:00.01 |   10652 |       |       |          |
+|   1 |  NESTED LOOPS                           |                 |      1 |     90 |     10 |00:00:00.01 |   10652 |       |       |          |
+|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED   | CUSTOMERS       |      1 |     90 |     16 |00:00:00.01 |      18 |       |       |          |
+|*  3 |    INDEX RANGE SCAN                     | CUSTS_CITY_IX   |      1 |     90 |     16 |00:00:00.01 |       2 |       |       |          |
+|   4 |   VIEW                                  | VW_LAT_4D09DA84 |     16 |      1 |     10 |00:00:00.01 |   10634 |       |       |          |
+|*  5 |    VIEW                                 |                 |     16 |      1 |     10 |00:00:00.01 |   10634 |       |       |          |
+|*  6 |     WINDOW SORT PUSHED RANK             |                 |     16 |    781 |     10 |00:00:00.01 |   10634 |  2048 |  2048 | 2048  (0)|
+|   7 |      TABLE ACCESS BY INDEX ROWID BATCHED| SALES2          |     16 |    781 |  13422 |00:00:00.01 |   10634 |       |       |          |
+|*  8 |       INDEX RANGE SCAN                  | SALES2_IX02     |     16 |     99 |  13422 |00:00:00.01 |      79 |       |       |          |
+------------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   3 - access("CUST_CITY"='Tokyo')
+   5 - filter("from$_subquery$_005"."rowlimit_$$_rownumber"<=1)
+   6 - filter(ROW_NUMBER() OVER ( ORDER BY INTERNAL_FUNCTION("SALES2"."TIME_ID") DESC )<=1)
+   8 - access("CUST_ID"="CUSTOMERS"."CUST_ID")
+   
+
+-- 특정 고객 대상 (인덱스만 사용 (검색 컬럼 제한))	 
+
+SELECT *
+  FROM (SELECT * 
+          FROM CUSTOMERS 
+		 WHERE CUST_CITY = 'Tokyo') C 
+  CROSS APPLY
+       (SELECT /*+ INDEX(SALES2(CUST_ID, TIME_ID)) */ CUST_ID, TIME_ID
+	      FROM SALES2 
+		 WHERE CUST_ID = C.CUST_ID 
+ 		 ORDER BY TIME_ID DESC 
+         FETCH FIRST 1 ROWS ONLY) S ; 
+@XPLAN   
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                            | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                     |                 |      1 |        |     10 |00:00:00.01 |      97 |       |       |          |
+|   1 |  NESTED LOOPS                        |                 |      1 |     90 |     10 |00:00:00.01 |      97 |       |       |          |
+|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED| CUSTOMERS       |      1 |     90 |     16 |00:00:00.01 |      18 |       |       |          |
+|*  3 |    INDEX RANGE SCAN                  | CUSTS_CITY_IX   |      1 |     90 |     16 |00:00:00.01 |       2 |       |       |          |
+|   4 |   VIEW                               | VW_LAT_4D09DA84 |     16 |      1 |     10 |00:00:00.01 |      79 |       |       |          |
+|*  5 |    VIEW                              |                 |     16 |      1 |     10 |00:00:00.01 |      79 |       |       |          |
+|*  6 |     WINDOW SORT PUSHED RANK          |                 |     16 |    781 |     10 |00:00:00.01 |      79 |  2048 |  2048 | 2048  (0)|
+|*  7 |      INDEX RANGE SCAN                | SALES2_IX02     |     16 |    781 |  13422 |00:00:00.01 |      79 |       |       |          |
+---------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   3 - access("CUST_CITY"='Tokyo')
+   5 - filter("from$_subquery$_005"."rowlimit_$$_rownumber"<=1)
+   6 - filter(ROW_NUMBER() OVER ( ORDER BY INTERNAL_FUNCTION("TIME_ID") DESC )<=1)
+   7 - access("CUST_ID"="CUSTOMERS"."CUST_ID")
+
+
+---------------------------
+-- 일반 조건 추가 NL 조인 (Non-PK)  
+
+SELECT /*+ LEADING(C) USE_NL(S) */ * 
+  FROM CUSTOMERS C 
+  JOIN (SELECT cust_id, time_id 
+		  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY CUST_ID ORDER BY TIME_ID DESC) AS RN
+					  ,S.*
+				  FROM SALES2 S)
+		 WHERE RN = 1) S 
+	ON C.CUST_ID   = S.CUST_ID
+ WHERE C.CUST_CITY = 'Tokyo' ;
+@XPLAN 
+-------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                            | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                     |               |      1 |        |     10 |00:00:00.01 |      97 |       |       |          |
+|   1 |  NESTED LOOPS                        |               |      1 |   8892 |     10 |00:00:00.01 |      97 |       |       |          |
+|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED| CUSTOMERS     |      1 |     90 |     16 |00:00:00.01 |      18 |       |       |          |
+|*  3 |    INDEX RANGE SCAN                  | CUSTS_CITY_IX |      1 |     90 |     16 |00:00:00.01 |       2 |       |       |          |
+|*  4 |   VIEW PUSHED PREDICATE              |               |     16 |      1 |     10 |00:00:00.01 |      79 |       |       |          |
+|   5 |    WINDOW BUFFER                     |               |     16 |    781 |  13422 |00:00:00.01 |      79 | 99328 | 99328 |88064  (0)|
+|*  6 |     INDEX RANGE SCAN DESCENDING      | SALES2_IX02   |     16 |    781 |  13422 |00:00:00.01 |      79 |       |       |          |
+-------------------------------------------------------------------------------------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   3 - access("C"."CUST_CITY"='Tokyo')
+   4 - filter("RN"=1)
+   6 - access("S"."CUST_ID"="C"."CUST_ID")

@@ -1,0 +1,228 @@
+5 SELECT 	: 검색 대상 표현식
+1   FROM 	: 검색 대상 집합 (테이블, 뷰, 서브쿼리)
+2  WHERE 	: 행 제한을 위한 조건식
+3  GROUP BY 	: 그룹 생성을 위한 표현식
+4 HAVING 	: 그룹 제한을 위한 조건식
+6  ORDER BY 	: 정렬 위한 표현식
+
+SELECT 명령문의 실행 결과는 
+1. 2차원 구조의 표 
+2. 컬럼의 모든 행은 동일한 데이터 타입 
+
+docs.oracle.com/database
+
+-------------------------------------------------------------
+
+ALTER SYSTEM SET STATISTICS_LEVEL = ALL ;
+
+오답 
+SELECT C.CUST_ID, C.CUST_LAST_NAME, C.CUST_GENDER, C.CUST_YEAR_OF_BIRTH, 
+       C.CUST_CITY, C.CUST_POSTAL_CODE
+  FROM SALES      S 
+      ,CUSTOMERS  C 
+ WHERE S.CUST_ID = C.CUST_ID 
+   AND TO_CHAR(S.TIME_ID,'YYYY') = '1998' ; 
+
+답안
+SELECT DISTINCT 
+       C.CUST_ID, C.CUST_LAST_NAME, C.CUST_GENDER, C.CUST_YEAR_OF_BIRTH, 
+       C.CUST_CITY, C.CUST_POSTAL_CODE
+  FROM SALES      S 
+      ,CUSTOMERS  C 
+ WHERE S.CUST_ID = C.CUST_ID 
+   AND TO_CHAR(S.TIME_ID,'YYYY') = '1998' ; 
+@XPLAN
+
+답안
+SELECT C.CUST_ID, C.CUST_LAST_NAME, C.CUST_GENDER, C.CUST_YEAR_OF_BIRTH, 
+       C.CUST_CITY, C.CUST_POSTAL_CODE
+  FROM SALES      S 
+      ,CUSTOMERS  C 
+ WHERE S.CUST_ID = C.CUST_ID 
+   AND TO_CHAR(S.TIME_ID,'YYYY') = '1998'
+ GROUP BY C.CUST_ID, C.CUST_LAST_NAME, C.CUST_GENDER, C.CUST_YEAR_OF_BIRTH, 
+       C.CUST_CITY, C.CUST_POSTAL_CODE ; 
+@XPLAN
+
+모범 답안
+SELECT C.CUST_ID, C.CUST_LAST_NAME, C.CUST_GENDER, C.CUST_YEAR_OF_BIRTH, 
+       C.CUST_CITY, C.CUST_POSTAL_CODE
+  FROM CUSTOMERS  C 
+ WHERE CUST_ID IN ( SELECT CUST_ID 
+                      FROM SALES 
+                     WHERE TO_CHAR(TIME_ID,'YYYY') = '1998' ) ; 
+@XPLAN
+
+모범 답안 (최적)
+SELECT C.CUST_ID, C.CUST_LAST_NAME, C.CUST_GENDER, C.CUST_YEAR_OF_BIRTH, 
+       C.CUST_CITY, C.CUST_POSTAL_CODE
+  FROM CUSTOMERS  C 
+ WHERE CUST_ID IN ( SELECT CUST_ID 
+                      FROM SALES 
+                     WHERE TIME_ID BETWEEN '1998/01/01' AND '1998/12/31') ;
+@XPLAN
+------------------------------------------------------
+
+SELECT * 
+  FROM DEPT ; 
+
+SELECT * 
+  FROM EMP ; 
+
+SELECT * 
+  FROM DEPT D 
+      ,EMP  E 
+ WHERE D.DEPTNO = E.DEPTNO ; 
+
+------------------------------------------------------
+SELECT  ta.lnact         AS 계좌번호
+       ,ta.lnact_seq     AS 계좌일련번호
+       ,ta.ln_dt         AS 대출시작일자
+       ,ta.ln_amt        AS 대출금액
+       ,ta.dlq_dt        AS 연체시작일자
+       ,ta.dlq_cnt       AS 연체일수
+       ,SUM(tp.sum_mon_amt)  AS "입금계획 합계"
+       ,SUM(tr.sum_mon_amt)  AS "실제입금 합계"
+       ,SUM(tp.sum_mon_amt) - SUM(tr.sum_mon_amt) AS "연체금액 합계"
+  FROM tacct       ta 
+  JOIN trepay_plan tp
+    ON ta.lnact     = tp.lnact
+   AND ta.lnact_seq = tp.lnact_seq
+  JOIN trepay      tr 
+    ON ta.lnact     = tr.lnact
+   AND ta.lnact_seq = tr.lnact_seq
+ WHERE ta.dlq_cnt > 0
+   AND tp.pay_dt <= SYSDATE
+   AND tr.pay_dt <= SYSDATE
+ GROUP BY ta.lnact, ta.lnact_seq, ta.ln_dt, ta.ln_amt, ta.dlq_dt, ta.dlq_cnt 
+ORDER BY 9 DESC ; 
+
+
+답안
+- CASE1: 인라인 뷰 사용 
+SELECT  ta.lnact      AS 계좌번호
+       ,ta.lnact_seq     AS 계좌일련번호
+       ,ta.ln_dt         AS 대출시작일자
+       ,ta.ln_amt        AS 대출금액
+       ,ta.dlq_dt        AS 연체시작일자
+       ,ta.dlq_cnt       AS 연체일수
+       ,tp.sum_pamt      AS "입금계획 합계"
+       ,tr.sum_ramt      AS "실제입금 합계"
+       ,tp.sum_pamt - tr.sum_ramt AS "연체금액 합계"
+  FROM (SELECT * 
+          FROM tacct 
+         WHERE dlq_cnt > 0) ta 
+  JOIN (SELECT lnact, lnact_seq, SUM(sum_mon_amt) AS sum_pamt
+          FROM trepay_plan 
+         WHERE pay_dt <= SYSDATE 
+        GROUP BY lnact, lnact_seq) tp
+    ON ta.lnact     = tp.lnact
+   AND ta.lnact_seq = tp.lnact_seq
+  JOIN (SELECT lnact, lnact_seq, SUM(sum_mon_amt) AS sum_ramt
+          FROM trepay 
+         WHERE pay_dt <= SYSDATE
+        GROUP BY lnact, lnact_seq) tr
+    ON ta.lnact     = tr.lnact
+   AND ta.lnact_seq = tr.lnact_seq
+ORDER BY 9 DESC ; 
+
+- CASE2: WITH 절 사용 
+WITH ta AS (SELECT * 
+              FROM tacct 
+             WHERE dlq_cnt > 0)
+    ,tp AS (SELECT lnact, lnact_seq, SUM(sum_mon_amt) AS sum_pamt
+              FROM trepay_plan 
+             WHERE pay_dt <= SYSDATE
+             GROUP BY lnact, lnact_seq) 
+    ,tr AS (SELECT lnact, lnact_seq, SUM(sum_mon_amt) AS sum_ramt
+              FROM trepay 
+             WHERE pay_dt <= SYSDATE
+             GROUP BY lnact, lnact_seq)
+SELECT  ta.lnact      AS 계좌번호
+       ,ta.lnact_seq     AS 계좌일련번호
+       ,ta.ln_dt         AS 대출시작일자
+       ,ta.ln_amt        AS 대출금액
+       ,ta.dlq_dt        AS 연체시작일자
+       ,ta.dlq_cnt       AS 연체일수
+       ,tp.sum_pamt      AS "입금계획 합계"
+       ,tr.sum_ramt      AS "실제입금 합계"
+       ,tp.sum_pamt - tr.sum_ramt AS "연체금액 합계"
+  FROM  ta 
+  JOIN  tp
+    ON ta.lnact     = tp.lnact
+   AND ta.lnact_seq = tp.lnact_seq
+  JOIN tr
+    ON ta.lnact     = tr.lnact
+   AND ta.lnact_seq = tr.lnact_seq
+ORDER BY 9 DESC ; 
+-----------------------------------------------------------------------------------------
+
+SELECT * 
+  FROM ALL_TAB_COLUMNS
+ WHERE COLUMN_NAME = 'LNACT' ;
+
+SELECT * 
+  FROM EMP 
+ ORDER BY COMM DESC ;
+
+
+SELECT * 
+  FROM EMP 
+ ORDER BY COMM DESC NULLS FIRST;
+
+SELECT * 
+  FROM EMP 
+ ORDER BY NVL(COMM,-1) DESC ;
+
+-----------------------------------------------------------------------------------------
+
+SELECT a.empno, a.ename, a.job, a.sal, a.deptno, b.avg_sal 
+  FROM emp a 
+     ,(SELECT deptno, ROUND(AVG(sal)) AS avg_sal 
+         FROM emp 
+        GROUP BY deptno) b 
+ WHERE a.deptno = b.deptno 
+   AND a.sal    > b.avg_sal ;
+
+
+SELECT * 
+  FROM EMP E 
+ WHERE SAL > (SELECT AVG(SAL)
+                FROM EMP 
+               WHERE DEPTNO = E.DEPTNO) ; 
+
+SELECT a.empno, a.ename, a.job, a.sal, a.deptno 
+  FROM emp a 
+     ,(SELECT deptno, ROUND(AVG(sal)) AS avg_sal 
+         FROM emp 
+        GROUP BY deptno) b 
+ WHERE a.deptno = b.deptno 
+   AND a.sal    > b.avg_sal ;
+
+SELECT E.*, AVG(SAL) OVER()
+  FROM EMP E ; 
+
+SELECT E.*, AVG(SAL) OVER(PARTITION BY DEPTNO) AS AVG_SAL
+  FROM EMP E ; 
+
+SELECT * 
+  FROM (SELECT E.*, AVG(SAL) OVER(PARTITION BY DEPTNO) AS AVG_SAL
+          FROM EMP E)
+ WHERE SAL > AVG_SAL          ; 
+
+---------------------------------------
+SELECT BRANCH, TRUNC(AVG(LN_AMT),-6) AS AVG_AMT
+  FROM TACCT 
+ WHERE LMT_TYP IS NULL 
+ GROUP BY BRANCH 
+ORDER BY AVG_AMT ;
+
+
+
+
+
+
+
+
+
+

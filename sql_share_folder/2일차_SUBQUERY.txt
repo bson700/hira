@@ -1,0 +1,211 @@
+서브쿼리 : SQL 명령문에 포함된 SELECT 명령문
+- Main Query보다 먼저 실행될 수 있고, 
+  실행결과는 서브쿼리 위치로 리턴 후 Main Query에서 사용 됨
+
+1. 조건절의 Subquery (WHERE, HAVING) 
+ - 리턴되는 행, 컬럼 개수에 따라 비교 연산자 주의 
+ - Correlated Subquery 사용 가능 
+ - ORDER BY 절 사용 불가능 
+
+단일 행 서브쿼리: 단일 행 비교 연산자 사용  
+
+SELECT *
+  FROM employees
+ WHERE department_id = (SELECT department_id
+                          FROM departments
+                         WHERE location_id = 1800) ; 
+
+SELECT department_id
+      ,ROUND(AVG(salary)) 
+  FROM employees 
+ GROUP BY department_id
+HAVING ROUND(AVG(salary)) > (SELECT AVG(salary) 
+                               FROM employees 
+                              WHERE department_id = 60) ; 
+
+다중 행 서브쿼리: IN, ANY, ALL 사용
+
+SELECT *                         -- ERROR 
+  FROM employees
+ WHERE department_id = (SELECT department_id
+                          FROM departments
+                         WHERE location_id = 1700) ; 
+
+SELECT *                       
+  FROM employees
+ WHERE department_id IN (SELECT department_id
+                           FROM departments
+                          WHERE location_id = 1700) ; 
+
+SELECT *                         
+  FROM employees 
+ WHERE salary >ANY (SELECT AVG(salary) 
+                      FROM employees 
+                     GROUP BY department_id) ; 
+
+SELECT *                         
+  FROM employees 
+ WHERE salary >ANY (3500, 10154, 19333,4400,7000) ; 
+
+SELECT *                         
+  FROM employees 
+ WHERE salary > 3500 
+    OR salary > 10154
+    OR salary > 19333
+    OR salary > 4400
+    OR salary > 7000 ; 
+
+SELECT *                         
+  FROM employees 
+ WHERE salary > 3500 ; 
+
+다중 컬럼 서브쿼리: IN 사용  
+
+SELECT *
+  FROM employees 
+ WHERE (department_id, salary) IN (SELECT department_id, MIN(salary)
+                                     FROM employees 
+                                    GROUP BY department_id) ; 
+
+Correlated Subquery (Scalar Subqery) 
+
+SELECT * 
+  FROM employees e 
+ WHERE salary > (SELECT AVG(salary) 
+                   FROM employees 
+                  WHERE department_id = e.department_id) ; 
+
+EXISTS 
+
+SELECT COUNT(*)
+  FROM EMP 
+ WHERE DEPTNO = 10 
+    AND ROWNUM = 1 ; 
+
+SELECT 'YES' 
+  FROM DUAL 
+ WHERE EXISTS (SELECT * 
+                 FROM EMP 
+                WHERE DEPTNO = 10) ; 
+
+
+SELECT * 
+  FROM departments d 
+ WHERE EXISTS (SELECT * 
+                 FROM employees 
+                WHERE department_id = d.department_id) ; 
+
+SELECT * 
+  FROM DEPARTMENTS 
+ WHERE DEPARTMENT_ID IN (SELECT DEPARTMENT_ID
+                           FROM EMPLOYEES ) ;
+
+SELECT * 
+  FROM departments d 
+ WHERE NOT EXISTS (SELECT * 
+                     FROM employees 
+                    WHERE department_id = d.department_id) ; 
+
+SELECT * 
+  FROM DEPARTMENTS 
+ WHERE DEPARTMENT_ID NOT IN (SELECT DEPARTMENT_ID
+                               FROM EMPLOYEES
+                              WHERE DEPARTMENT_ID IS NOT NULL) ;
+
+
+
+2. FROM 절의 서브쿼리 (Inline View) 
+ - 실행 결과를 하나의 집합으로 사용 가능 (임시 테이블 효과) 
+ - 반드시 Main Query와 상관없이 실행 가능해야 함 
+ - ORDER BY 절 사용 가능 (TOP-n 질의) 
+ - Correlated Subquery 사용 불가능 
+ - WITH 절로 대체 가능 
+
+SELECT * 
+  FROM emp e 
+  JOIN (SELECT deptno, SUM(sal) AS SUM_SAL 
+          FROM emp 
+         GROUP BY deptno) s 
+    ON e.deptno = s.deptno ;   
+
+WITH sum_emp AS (SELECT deptno, SUM(sal) AS SUM_SAL 
+                   FROM emp 
+                  GROUP BY deptno)
+SELECT * 
+  FROM emp e 
+  JOIN sum_emp s 
+    ON e.deptno = s.deptno ;    
+
+SELECT * 
+  FROM (SELECT * 
+          FROM emp 
+         ORDER BY sal DESC) 
+ WHERE rownum <= 3 ; 
+
+SELECT *   -- ERROR 
+  FROM DEPT D 
+     ,(SELECT SUM(SAL) AS SUM_SAL 
+         FROM EMP 
+        WHERE DEPTNO = D.DEPTNO) ; 
+
+SELECT * 
+  FROM DEPT D 
+     ,LATERAL (SELECT SUM(SAL) AS SUM_SAL 
+                 FROM EMP 
+                WHERE DEPTNO = D.DEPTNO) ; 
+
+ lateral inline view가 뭐야? 
+
+
+3. SELECT 절의 서브쿼리 
+ - 반드시 하나의 컬럼, 하나의 행 리턴 (Scalar Subquery) 
+ - 보통 Correlated Subquery 사용됨 
+ - 동일 테이블을 반복적으로 사용하는 서브쿼리를 여러 개 사용 시 성능 저하 
+ - ORDER BY 절 사용 불가능 
+
+SELECT empno, ename, sal, deptno
+      ,(SELECT SUM(sal) 
+          FROM emp) AS total 
+  FROM emp ; 
+
+SELECT empno, ename, sal, deptno
+      ,(SELECT SUM(sal) 
+          FROM emp
+         WHERE deptno = e.deptno) AS dept_sum
+  FROM emp e; 
+
+SELECT empno, ename, sal, deptno            -- ERROR 
+      ,(SELECT SUM(sal), AVG(sal)  
+          FROM emp
+         WHERE deptno = e.deptno) AS dept_sum
+  FROM emp e; 
+
+SELECT empno, ename, sal, deptno
+      ,(SELECT SUM(sal) 
+          FROM emp
+         WHERE deptno = e.deptno) AS dept_sum
+      ,(SELECT ROUND(AVG(sal)) 
+          FROM emp
+         WHERE deptno = e.deptno) AS dept_avg
+  FROM emp e; 
+
+4. ORDER BY절의 서브쿼리 
+ - 반드시 하나의 컬럼, 하나의 행 리턴 (Scalar Subquery) 
+ - 정렬에 사용된 값이 화면에 검색이 안됨
+
+SELECT e.empno, e.ename, e.sal, e.deptno, d.dname, d.loc  
+  FROM emp  e
+  JOIN dept d 
+    ON e.deptno = d.deptno 
+ORDER BY d.loc ; 
+
+SELECT * 
+  FROM emp e 
+ORDER BY (SELECT loc
+            FROM dept 
+           WHERE deptno = e.deptno) ; 
+
+
+
+
+
