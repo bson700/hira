@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        p { padding: 30px; border: 1px solid red; background-color: red; }
+    </style>
+<!-- Code injected by Five-server -->
+  <script async data-id="five-server" data-file="c:\javascript\sample.html" type="application/javascript" src="/fiveserver.js"></script>
+  </head>
+<body>
+    <a href="https://www.naver.com">네이버로 이동</a>
+    <script>
+
+        const x = { name: "hong" };
+        console.log(x);
+
+        const y = JSON.stringify(x);
+        console.log(y, typeof y);
+
+        const z = JSON.parse(y);
+        console.log(z);
+
+
+        const a = document.querySelector("a");
+
+        a.addEventListener("click", function(e) {
+            e.preventDefault();
+
+            window.location.href = "https://www.google.com";
+        });
+    </script>    
+</body>
+</html>

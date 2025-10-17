@@ -1,0 +1,638 @@
+# 실습 자료 공유
+http://30.100.1.78:5500/1day.txt
+
+# 박창렴 / myanjini@gmail.com / 010-2982-7033
+
+# 실습에 필요한 프로그램 설치
+- Visual Studio Code 설치 >> https://code.visualstudio.com/download
+- node.js 설치 >> https://nodejs.org/ko/download
+* 설치 파일을 다운로드해서 기본 설정 상태로 설치를 진행
+
+
+JavaScript를 실행 방법
+
+#1. node REPL 기반 
+시작 > cmd > node 
+
+C:\Users\HIRA> node
+Welcome to Node.js v22.20.0.
+Type ".help" for more information.
+> var i = 100;
+undefined
+> var j = 200;
+undefined
+> console.log(i + j);
+300
+undefined
+> .exit
+
+
+#2. 소스 파일을 node로 실행
+
+C:\Users\HIRA> mkdir c:\javascript && cd c:\javascript
+>> 작업 디렉터리를 생성하고 작업 디렉터리로 이동
+
+c:\javascript> code .
+>> 현재 디렉터리를 프로젝트 루트로 설정한 상태로 VSCode를 실행
+
+c:\javascript\sample.js 파일을 추가
+var i = 100;
+var j = 200;
+console.log(i + j);
+
+c:\javascript> node sample.js
+300
+
+
+#3. HTML 파일 내에 <script> 태그를 사용
+c:\javascript\sample.html 파일을 추가
+
+##3-1. 외부에 정의된 자바스크립트 파일을 가져와서 실행 => external
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="sample.js"></script>
+</body>
+</html>
+
+웹서버(Live Server)를 실행 
+> http://본인PC의IP:5500/sample.html 접속 
+> F12(개발자도구) 
+> Console 탭
+> 300 출력을 확인
+
+
+##3-2. <script> 태그에 스크립트 코드를 작성해서 실행 => internal
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        var x = 200;
+        var y = 300;
+        console.log(x + y);
+    </script>
+</body>
+</html>
+
+Console에 500이 출력된 것을 확인
+
+
+##3-3. HTML 태그에서 스크립트 코드를 실행 => inline
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button onclick="javascript: console.log(400)">클릭하세요.</button>
+</body>
+</html>
+
+버튼을 클릭하면 콘솔에 400이 출력되는 것을 확인 
+
+
+#4. 브라우저의 개발자도구 콘솔을 이용 <== #1. node REPL 와 동일한 방식 
+var x = 100;
+undefined
+var y = 400;
+undefined
+console.log(x + y);
+500
+
+
+암시적 형변환
+    <script>
+        console.log("1" + 1);   // 11
+        console.log(1 + "1");   // 11
+        console.log("1" - 1);   // 0
+    </script>
+
+
+숫자(number) 타입의 특수한 값        
+    <script>
+        let x = 10 / 0;
+        console.log(x, typeof x);   // Infinity number
+
+        x = -10 / 0;
+        console.log(x, typeof x);   // -Infinity number
+
+        x = 10 / -0;
+        console.log(x, typeof x);   // -Infinity number
+        
+        x = 1 * "string";
+        console.log(x, typeof x);   // NaN number
+    </script>    
+
+
+
+문자열은 작은 따움표, 큰 따움표, 백틱으로 정의 
+    <script>
+        let s = "큰 따움표로 감싼 문자열 내의 '작은 따움표' 문자열";
+        console.log(typeof s, s);   // string 큰 따움표로 감싼 문자열 내의 '작은 따움표' 문자열
+
+        s = '작은 따움표로 감싼 문자열 내의 "큰 따움표" 문자열';
+        console.log(typeof s, s);   // string 작은 다움표로 감싼 문자열 내의 "큰 따움표" 문자열
+
+        s = "큰 따움표로 감싼 문자열 내의 \"큰 따움표\" 문자열";
+        console.log(typeof s, s);   // string 큰 따움표로 감싼 문자열 내의 "큰 따움표" 문자열
+
+        s = '작은 따움표로 감싼 문자열 내의 \'작은 따움표\' 문자열';
+        console.log(typeof s, s);   // string 작은 다움표로 감싼 문자열 내의 '작은 따움표' 문자열
+
+        s = `백틱으로 감싼 문자열 내의 "큰 따움표" 문자열`;
+        console.log(typeof s, s);   // string 백틱으로 감싼 문자열 내의 "큰 따움표" 문자열
+
+        s = `백틱으로 감싼 문자열 내의 '작은 따움표' 문자열`;
+        console.log(typeof s, s);   // string 백틱으로 감싼 문자열 내의 '작은 따움표' 문자열
+
+        // 참고 >> https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Template_literals
+        const name = "홍길동";
+        const age = 23;
+        s = `백틱으로 감싼 문자열 내의 표현식 >>> ${name}의 나이는 ${age}이며, 내년에는 ${age + 1}이 됩니다.`;
+        console.log(s);             // 백틱으로 감싼 문자열 내의 표현식 >>> 홍길동의 나이는 23이며, 내년에는 24이 됩니다.
+    </script>    
+
+
+
+문자열은 배열처럼 인덱스를 통해 접근이 가능 => 유사 배열
+    <script>
+        let str = "this is 문자열";
+        console.log(`str = ${str}`);
+        
+        for (let i = 0; i < str.length; i ++) {
+            console.log(`str[${i}] = '${str[i]}'`);
+        }
+    </script>
+
+
+
+문자열은 원시 타입이며, 변경 불가능(immutable)함
+    <script>
+        let str = "this is 문자열";
+        console.log(`str = ${str}`);
+        
+        str[0] = "T";
+        console.log(`str = ${str}`);
+
+        let newStr = str.toLocaleUpperCase();
+        console.log(`newStr = ${newStr}`);
+        console.log(`str = ${str}`);
+        console.log(str === newStr);
+    </script>
+
+
+
+    <script>
+        // 객체 정의 
+        // 객체 속성의 키는 문자열(따움표 생략이 가능), 유일해야 함
+        // 객체 속성의 값은 모든 타입이 올 수 있음
+        const obj = {
+            name: "홍길동", 
+            "age": 23, 
+            123: 789,
+            "favorite colors": ["빨", "주", "노"],
+            hello: function() {
+                return this.name;
+            }, 
+            age: 40,    // 키가 중복되면 뒤의 값으로 앞의 값을 덮어씀
+        };
+        console.log(obj);
+
+        // 객체 속성을 참조할 때는 
+        // 객체변수.속성의키 또는 객체변수["속성의키"] 형식을 사용 
+        console.log(obj.name);
+        console.log(obj[name]);     // undefined
+        console.log(obj["name"]);
+
+        // 키 이름에 특수 문자가 포함된 경우 . 연산자로 참조할 수 없음
+        console.log(obj["favorite colors"]);
+
+        const years = "age";
+        // https://xionwcfm.tistory.com/242
+        console.log(obj[years]);    // 40 <= 계산된 속성명
+    </script>
+
+
+
+계산된 속성명 사용 예 
+    <script>
+        // key, value를 전달받아 객체를 반환하는 함수
+        function generateObject(key, value) {
+            /*
+            const obj = {};
+            obj[key] = value;
+            return obj;
+            */
+
+            return {[key]: value};
+        }
+
+        console.log(generateObject("name", "홍길동"));   // {name: "홍길동"}
+    </script>    
+
+
+    <script>
+        // key, value, num를 전달받아 { key+num: value } 형태의객체를 반환하는 함수
+        function generateObject(key, value, num) {
+            /*
+            const obj = {};
+            obj[key+num] = value;
+            return obj;
+            */
+            return {[key+num]: value};
+        }
+
+        console.log(generateObject("name", "홍길동", 1));   // {name1: "홍길동"}
+        console.log(generateObject("name", "고길동", 2));   // {name2: "고길동"}
+    </script>    
+
+
+생성자 함수
+    <script>
+        function Person(name, age) {
+            let married = false;    // private
+            
+            this.name = name;
+            this.age = age;   
+            this.isMarried = function() {
+                return married;
+            }         
+        }
+
+        const person1 = new Person("홍길동", 23);
+        console.log(person1);   // Person {name: '홍길동', age: 23}
+        console.log(person1.name);
+        console.log(person1.married);   // undefined
+        console.log(person1.isMarried());   // false
+
+
+        const person2 = new Person("고길동", 43);
+        console.log(person2);   // Person {name: '고길동', age: 43}
+
+        const person3 = Person("고길동", 43);
+        console.log(person3);   // undefined
+
+
+    </script>
+
+
+    <script>
+        const first = 100;
+        const name1 = 10;
+        const name2 = "이름";
+
+        const person = {
+            [first-name1]: "길동1", 
+            [first+name2]: "길동2", 
+            "first-name1": "길동3", 
+        };
+
+        console.log(person);
+    </script>
+
+
+객체 프로퍼티 수정, 추가, 삭제
+    <script>
+        const person = {
+            name: "홍길동", 
+            age: 23,
+            name: "고길동",
+        };
+        console.log(person);
+        
+        person.name = "신길동";
+        console.log(person);
+
+        person.email = "test@test.com";
+        console.log(person);
+
+        delete person.name;
+        console.log(person);
+        
+        delete person;
+        console.log(person);
+    </script>    
+
+
+객체 데이터를 순차적으로 처리하는 방버
+    <script>
+        const person = {
+            name: "홍길동", 
+            age: 23,
+            email: "test@test.com",
+        };
+        console.log(person);
+
+        // for-in => 객체 속성의 키를 반환
+        for (let key in person) {
+            console.log(`person["${key}"] => ${person[key]}`);
+        }
+
+        const arr = [ "첫번째", "두번째", "세번째" ];
+        arr.name = "배열";
+        for (let idx in arr) {
+            console.log(`arr[${idx}] => ${arr[idx]}`);
+        }
+
+        // for-of ==> 배열 데이터(값)를 순차적으로 반환
+        let idx = 0;
+        for (let value of arr) {
+            console.log(`arr[${idx}] => ${value}`);
+            idx ++;
+        }
+    </script>    
+
+
+
+    <script>
+        // Public 메소드부터 반환된 Private 배열
+        // Private 배열에 Public 데이터 할당
+
+        let x = 100;
+        let y = x;
+        console.log(x);
+        console.log(y);
+
+        x = 200;
+        console.log(x);     // 200
+        console.log(y);     // 100
+
+
+        const person1 = {
+            name: "홍길동", 
+            age: 23
+        };
+        const person2 = person1;
+        console.log(person1);
+        console.log(person2);
+
+        person1.age = 43;
+        console.log(person1);   // {name: '홍길동', age: 43}
+        console.log(person2);   // {name: '홍길동', age: 43}
+
+
+        // 전개 연산자를 이용한 값 복사
+        // https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Operators/Spread_syntax
+        const person3 = {
+            name: "홍길동", 
+            age: 23
+        };
+        const person4 = { ...person3 };
+        console.log(person3);
+        console.log(person4);
+
+        person3.age = 43;
+        console.log(person3);   // {name: '홍길동', age: 43}
+        console.log(person4);   // {name: '홍길동', age: 23}
+
+        // for-in 구문을 이용해서 person3 객체의 값을 복사한 person5 객체를 생성 
+        // const person5 = { ...person3 }; 구문과 동일
+        const person5 = {};
+        for (let key in person3) {
+            person5[key] = person3[key];
+        }
+        console.log(person5);
+
+    </script>    
+
+
+    <script>
+        const org = {
+            name: "홍길동", age: 23
+        };
+
+        const copy = Object.assign({}, org);
+        console.log(org);           // {name: '홍길동', age: 23}
+        console.log(copy);          // {name: '홍길동', age: 23}
+
+        console.log(org == copy);   // false
+
+        {
+            const o1 = { a: 1 };
+            const o2 = { b: 2 };
+            const o3 = { c: 3 };
+            const new1 = Object.assign(o1, o2, o3);
+            console.log(new1);          // {a: 1, b: 2, c: 3}
+            console.log(o1);            // {a: 1, b: 2, c: 3}
+            console.log(o1 == new1);    // true
+        }
+
+        {
+            const o1 = { a: 1 };
+            const o2 = { b: 2 };
+            const o3 = { c: 3 };
+            const new1 = Object.assign({}, o1, o2, o3);
+            console.log(new1);          // {a: 1, b: 2, c: 3}
+            console.log(o1);            // {a: 1}
+            console.log(o1 == new1);    // false
+        }
+    </script>    
+
+
+
+함수를 정의하는 방법
+    <script>
+        {
+            // 함수 선언문 형태로 함수를 정의 => function 함수이름 (매개변수) { 함수본문 }
+            function add (a, b) {
+                return a + b;
+            }
+
+            // 함수 호출 => 함수이름(인자)
+            console.log(add(10, 20));   // 30
+        }
+
+        {
+            // 익명 함수 표현식으로 함수를 정의 => const 함수변수 = function (매개변수) { 함수본문 };
+            const add = function (a, b) { return a + b; };
+
+            // 함수 호출 => 함수변수(인자)
+            console.log(add(20, 30));   // 50
+        }
+
+        {
+            // 기명 함수 표현식으로 함수를 정의 => const 함수변수 = function 함수이름 (매개변수) { 함수본문 };
+            const add = function sum (a, b) { return a + b; };
+
+            // 함수 호출 => 함수변수(인자)
+            console.log(add(30, 40));   // 70
+
+            // 함수이름(인자)
+            try {
+                console.log(sum(40, 50));   
+            } catch (e) {
+                console.error(e);       // sum is not defined
+            }
+        }
+
+        {
+            // 기명 함수 표현식에서 함수 이름은 외부에서 직접 호출(사용)할 수 없으며, 
+            // 함수 내부에서만 사용(호출 = 재귀호출)할 수 있음 
+            const myfactorial = function factorial (n) {
+                if (n <= 1) return 1;
+                return n * factorial(n-1);
+            };
+            console.log(myfactorial(10));   // 3628800
+        }
+
+        {
+            // Function 생성자 함수를 이용해서 함수를 정의 
+            const sum = new Function("a", "b", "return a + b;");
+
+            // 함수 실행
+            console.log(sum(10, 20));
+        }
+    </script>    
+
+
+
+함수를 변수 처럼 사용하는 것이 가능
+    <script>
+        {
+            const x = 10;
+            const y = x;
+            console.log(y + 20);        // 30 
+        }
+        {
+            const add = function (a, b) { return a + b; };
+            const sum = add;
+
+            console.log(add(10, 20));   // 30
+            console.log(sum(10, 20));   // 30
+        }
+
+        {
+            function buttonClick(f) {
+                f();
+            }
+                        
+            function loginButtonClick() {
+                console.log("Login Button Clicked!");
+            }
+
+            function searchButtonClick() {
+                console.log("Search Button Clicked!");
+            }
+
+            buttonClick(loginButtonClick);
+            buttonClick(searchButtonClick);
+        }
+    </script>
+
+    <button onclick="javascript: searchButtonClick()">버튼 클릭</button>
+
+
+
+변수 호이스팅
+    <script>
+        console.log(x);     // undefined
+        var x = 100;
+        console.log(x);     // 100
+
+        /*
+        var x;
+        console.log(x);
+        x = 100;
+        console.log(x);
+        */
+    </script>
+
+
+호이스팅 문제를 해결하기 위해서는 let, const 키워드를 이용해서 변수를 정의 
+    <script>
+        {
+            try {
+                console.log(x);     
+            } catch (e) {
+                console.log(e); // Cannot access 'x' before initialization
+            }
+            let x = 100;
+            console.log(x);     // 100
+        }
+
+        {
+            let x;
+            console.log(x);     // undefined
+            x = 100;
+            console.log(x);     // 100
+        }
+    </script>        
+
+
+함수 선언문으로 함수를 정의하면 함수 호이스팅이 일어나서 위치와 관계 없이 사용이 가능
+    <script>
+        console.log("#2", sum(20, 30));     // #2 50
+        function sum(a, b) {
+            return a + b;
+        }
+        console.log("#1", sum(10, 20));     // #1 30
+    </script> 
+
+
+함수 표현식으로 함수를 정의하면 함수 변수의 정의 방식에 따라 호이스팅이 처리
+
+    <script>
+        console.log("#2", sum(20, 30)); // Cannot access 'sum' before initialization
+
+        const sum = function (a, b) {
+            return a + b;
+        };
+
+        console.log("#1", sum(10, 20)); // #1 30
+    </script>
+
+    <script>
+        console.log("#2", sum(20, 30)); // sum is not a function
+
+        var sum = function (a, b) {
+            return a + b;
+        };
+
+        console.log("#1", sum(10, 20)); // #1 30
+    </script> 
+
+
+단축속성명
+    <script>
+        const a = 100;
+        const b = 200;
+
+        // 단축 속성명 
+        // https://bamtory29.tistory.com/entry/Javascript-shorthand-property-names
+        // 객체 속성의 키 이름과 키 값을 가지고 있는 변수의 이름이 동일하면 키 이름을 생략 
+        const o = { a, b };
+        console.log(o);     // {a: 100, b: 200}
+
+        const o2 = { a: a, b: b };
+        console.log(o2);    // {a: 100, b: 200}
+
+        // 객체 속성 중 함수를 값으로 가지는 경우, 함수 (변수) 이름과 키 이름이 동일한 경우 키 이름을 생략
+        const f = function() { };
+        const o3 = { a, f };
+        console.log(o3);    // {a: 100, f: ƒ}
+    </script>   
+
+    <script>
+        let x = 100;
+        let y = 200;
+
+        console.log(`x = ${x}, y = ${y}`);  // x = 100, y = 200
+        console.log({ x, y });              // {x: 100, y: 200}
+
+        let a = 1;
+        let b = 2;
+        let c = "ggile";
+        console.log({a, b, c});     // {a: 1, b: 2, c: 'ggile'}
+    </script>              

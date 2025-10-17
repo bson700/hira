@@ -1,0 +1,824 @@
+# 실습 내용 공유
+http://30.100.1.78:5500/2day.txt
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        // arguments <= 함수 호출 시 전달된 인수들의 정보를 담고 있는 배열 객체
+        {
+            function sum(a, b) {
+                console.log(arguments);
+                return a + b;
+            }
+            console.log(sum());             // NaN
+            console.log(sum(10));           // NaN
+            console.log(sum(10, 20));       // 30
+            console.log(sum(10, 20, 30));   // 30
+        }
+        {   
+            // arguments 속성을 이용해서 가변 인자 처리
+            function sum() {
+                let result = 0;
+                for (let i = 0; i < arguments.length; i ++) {
+                    result += arguments[i];
+                }
+                return result;
+            }
+            console.log(sum());             // 0
+            console.log(sum(10));           // 10
+            console.log(sum(10, 20));       // 30
+            console.log(sum(10, 20, 30));   // 60
+        }
+        {
+            // ES6 가변 인자
+            function sum(...args) {
+                if (!args.lenth) {
+                    return 0;
+                }
+                return args.reduce((pre, cur) => pre + cur);
+            }
+            console.log(sum());             // 0
+            console.log(sum(10));           // 10
+            console.log(sum(10, 20));       // 30
+            console.log(sum(10, 20, 30));   // 60
+        }
+    </script>   
+</body>
+</html>
+
+
+    <script>
+        // caller 프로퍼티: 자신을 호출한 함수 
+        
+        // 인자로 전달한 함수의 실행 결과를 반환해주는 함수
+        function foo(func) {
+            let res = func();
+            return res;
+        }
+
+        function bar() {
+            return 'caller : ' + bar.caller;
+        }
+
+        console.log(foo(bar));
+        console.log(bar());
+    </script>  
+
+
+    <script>
+        // length 프로퍼티: 함수 정의 시 작성된 매개변수의 갯수
+        
+        function zero() {}
+        function one(a) {}
+        function two(a, b) {}
+
+        console.log(zero.length);
+        console.log(one.length);
+        console.log(two.length);
+    </script>  
+
+
+    <script>
+        // name 프로퍼티: 함수 이름
+        
+        // 함수 선언문
+        function aaa() {}
+        console.log(aaa.name);
+
+        // 익명 함수 표현식
+        const bbb = function () {}; 
+        console.log(bbb.name);      // bbb
+
+        // 기명 함수 표현식
+        const ccc = function ddd() {};
+        console.log(ccc.name);      // ddd
+        try {
+            console.log(ddd.name);
+        } catch (e) {
+            console.log(e);
+        }
+
+        // 함수를 다른 변수에 할당
+        const eee = bbb;
+        console.log(eee.name);      // bbb
+    </script>   
+
+
+    <script>
+        // 내부 함수 : 함수 내부에 정의된 함수
+        // 내부 함수는 부모 함수의 변수에 접근할 수 있으나, 
+        // 부모 함수는 내부 함수의 변수에 접근할 수 없음
+
+        function parent(param) {
+            let parentValue = param;
+
+            function child() {
+                let childValue = "Hello";
+                console.log(childValue + " " + parentValue);
+            }
+            child();
+
+            try {
+                console.log(childValue + " " + parentValue);
+            } catch (e) {
+                console.log(e);     // childValue is not defined
+            }
+        }
+
+        parent("홍길동");
+
+        // 부모 함수 외부에서는 내부 함수를 호출할 수 없음
+        try {
+            child();            
+        } catch (e) {
+            console.log(e);
+        }
+    </script>   
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button id="myButton">클릭해 주세요.</button>
+
+    <script>
+        // 콜백 함수 
+        function myButtonClick(e) {
+            console.log("clicked", e.x, e.y);
+        }
+
+        const button = document.getElementById("myButton");
+        button.addEventListener("click", myButtonClick);
+
+        console.log(new Date());
+        setTimeout(function() {
+            console.log("3초 후 출력")
+            console.log(new Date());
+        }, 3000);
+    </script>   
+</body>
+</html>
+
+
+
+    <script>
+        // 함수는 호출될 때, 매개변수가 전달되는 인자값 외에, 
+        // arguments 객체와 this를 암묵적으로 전달받음
+        {
+            // 함수를 호출할 때 함수가 어떻게 호출되었는지에 따라 this에 바인딩할 객체가 동적으로 결정
+            function sum(a, b) {
+                console.log(arguments);
+                console.log(this);
+                return a + b;
+            }
+            sum(10, 20);
+        }
+        // 함수를 호출하는 방식
+        {
+            const foo = function() { 
+                console.log(this);
+            };
+            
+            // 1. 함수 호출
+            foo();
+
+            // 2. 메소드 호출
+            const obj = { foo: foo };
+            obj.foo();
+
+            // 3. 생성자 함수 호출
+            const inst = new foo();
+
+            // 4. apply/call/bind 호출
+            const bar = { name: "bar" };
+            foo.call(bar);
+            foo.apply(bar);
+            foo.bind(bar)();
+        }
+    </script>   
+
+
+    <script>
+        {
+            // 내부함수는 일반함수, 메서드, 콜백함수 어디에서 선언되었든 상관없이 this는 전역객체에 바인딩
+            var value = 1;
+
+            let obj = {
+                value: 100, 
+                foo: function() {
+                    setTimeout(function() {
+                        console.log("callback's this: ", this);
+                        console.log("callback's this.value: ", this.value);
+                    }, 1000);
+                }
+            };
+            obj.foo();
+        }
+        {
+            // 내부함수의 this가 전역객체를 참조하는 것을 회피하는 방법
+            var value = 1;
+
+            let obj = {
+                value: 100, 
+                foo: function() {
+                    const that = this;
+                    setTimeout(function() {
+                        console.log("callback's this: ", that);
+                        console.log("callback's this.value: ", that.value);
+                    }, 1000);
+                }
+            };
+            obj.foo();            
+        }
+        {
+            // 내부함수의 this가 전역객체를 참조하는 것을 회피하는 방법
+            var value = 1;
+
+            let obj = {
+                value: 100, 
+                foo: function() {
+                    setTimeout(() => {
+                        console.log("callback's this: ", this);
+                        console.log("callback's this.value: ", this.value);
+                    }, 1000);
+                }
+            };
+            obj.foo();            
+        }        
+    </script>   
+
+
+    <script>
+        {
+            // 메소드 내부의 this는 해당 메소드를 호출한 객체에 바인딩
+            var obj1 = {
+                name: '홍길동', 
+                sayName: function() {
+                    console.log('안녕!', this.name);
+                },
+            };
+
+            var obj2 = {
+                name: '고길동'
+            };
+            obj2.sayName = obj1.sayName;
+
+            obj1.sayName();
+            obj2.sayName();
+        }
+    </script>   
+
+
+    <script>
+        {
+            // 생성자 함수 호출
+            // new 연산자와 함께 생성자 함수를 호출하면, 빈 객체 생성 및 this 바인딩 -> this를 통한 프로퍼티 생성
+
+            // 생성자 함수 내에서 사용되는 this는 빈 객체를 가리킴
+            function Person(name) {
+                this.name = name;
+            }
+
+            const hong = new Person("홍길동");
+            console.log(hong);
+
+            // new 연산자를 사용하지 않으면 일반함수로 등록하고, 일반함수 남의 this는 전역객체와 바인딩
+            const go = Person("고길동");
+            console.log(go);            // 함수가 반환하는 값이 없기 때문에 undefined
+            console.log(window.name);   // 고길동
+        }
+    </script>
+
+
+    <script>
+        {
+            // Scope-Safe Constructor => new 없이 호출하는 것에 대비
+            function A(value) {
+                // this가 호출된 함수의 인스턴스가 아니면 new와 함께 생성자 함수를 호출해 인스턴스를 반환
+                if (!(this instanceof arguments.callee)) {
+                    return new arguments.callee(value);
+                }
+                this.value = value ? value : 0;
+            }
+
+            const a = new A(100);
+            const b = A(200);
+
+            console.log(a.value);
+            console.log(b.value);
+        }
+    </script>
+
+
+
+
+
+    <script>
+        // 즉시 실행 함수(IIFE, Immediately Invoked Function Expression)
+        // 함수 정의와 동시에 실행되는 함수 
+
+        // 기명 즉시 실행 함수
+        (function init() {
+            let a = 10;
+            let b = 20;
+            console.log(a, b);
+        })();
+
+        // 익명 즉시 실행 함수
+        (function () {
+            let a = 10;
+            let b = 20;
+            console.log(a, b);
+        })();
+
+        // 매개 변수가 있는 경우
+        (function init(a, b) {
+            console.log(a, b);
+        })(20, 30);
+
+        (function (a, b) {
+            console.log(a, b);
+        })(20, 30);
+    </script>   
+
+
+    <script>
+        {
+            // func.apply(thisArg, [argsArray])
+            // - thisArg: 함수 내부의 this에 바인딩할 객체
+            // - argsArray:  함수에 전달할 arguments의 배열
+
+            function Person(name) {
+                this.name = name;
+            }
+
+            const foo = { age: 23 };
+
+            // 생성자 함수 Person을 호출하고, 이때 this에 객체 foo를 바인딩
+            Person.apply(foo, ["홍길동"]);
+
+            console.log(foo);
+            console.log(foo.name);
+        }
+
+        {
+            function Person(name) {
+                this.name = name;
+            }
+
+            const foo = { age: 23 };
+
+            Person.call(foo, "홍길동");
+
+            console.log(foo);
+            console.log(foo.name);
+        }
+
+        {
+            function Person(name) {
+                this.name = name;
+            }
+
+            const foo = { age: 23 };
+
+            const boundPerson = Person.bind(foo);
+            boundPerson("홍길동")
+
+            console.log(foo);
+            console.log(foo.name);
+        }        
+    </script>  
+
+
+// map, filter, reduce
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        // 배열 처리 함수 
+        {
+            // map ==> 1 : 1
+            const source = [ 1, 2, 3, 4, 5 ];
+
+            // 2 더한 결과 배열을 생성
+            function func(item) { 
+                return item + 2; 
+            };
+            const twoPlus = source.map(func);
+            console.log(twoPlus);   // [3, 4, 5, 6, 7]
+
+            // 3을 곱한 결과 배열을 생성
+            const threeTimes = source.map(item => item * 3);
+            console.log(threeTimes);
+        }
+
+        {
+            const numbers = [ 1, 2, 3, 4, 5 ];
+
+            const twoPlus = item => item + 2;
+            const threeTimes = item => item * 3;
+
+            // 2 더한 결과에 3 곱한 결과 배열을 생성
+            console.log(numbers.map(twoPlus).map(threeTimes));
+        }
+
+        {
+            // filter
+            const numbers = [ 1, 2, 3, 4, 5 ];
+
+            // 홀수만 추출
+            const odd = numbers.filter(item => item % 2 === 1);
+            console.log(odd);
+
+            // for 루프를 이용해서 구현
+            const odd2 = [];
+            for (let i = 0; i < numbers.length; i ++) {
+                if (numbers[i] % 2 === 1) 
+                    odd2.push(numbers[i]);
+            }
+            console.log(odd2);
+        }
+
+        { 
+            // reduce
+            const numbers = [ 1, 2, 3, 4, 5 ];
+
+            // 합계
+            // for 루프를 이용해서 구현
+            let total = 0;
+            for (let i = 0; i < numbers.length; i ++) {
+                total += numbers[i];
+            }
+            console.log(total);
+
+            // reduce
+            const result = numbers.reduce((prev, curr) => prev + curr);
+            console.log(result);
+        }
+
+        {
+            const numbers = [ 1, 2, 3, 4, 5 ];
+
+            // 홀수만 추출해서 2를 곱한 후 합계를 출력
+            const result = numbers
+                            .filter(item => item % 2 === 1)
+                            .map(item => item * 2)
+                            .reduce((pre, cur) => pre + cur);
+            console.log(result);
+        }
+    </script>   
+</body>
+</html>
+
+
+
+        {
+            // 화살표 함수 
+
+            // 함수 표현식
+            const add = function(a, b) {
+                return a + b;
+            };
+
+            // 함수 표현식에서 function 키워드를 제거하고, 
+            // 매개변수와 본문 사이에 화살표를 추가 
+            const add1 = (a, b) => {
+                return a + b;
+            };
+
+            // 함수 본문의 내용이 한 문장이면 중괄호와 return 생략이 가능
+            const add2 = (a, b) => a + b;
+
+            // 매개변수가 하나인 경우 소괄호 생략이 가능 
+            const add3 = a => a + 3;
+            
+            // 함수가 반환하는 값이 객체인 경우 소괄호로 묶어서 표현
+            const add4 = a => ({ result: a + 4 });
+            const add5 = a => { return { result: a + 5 }; };
+
+            function add6 (a) {
+                return { result: a + 6 };
+            }
+        }        
+        {
+            const numbers = [ 1, 2, 3, 4, 5 ];
+
+            console.log(numbers
+                            .filter(i => i % 2 === 1)
+                            .map(i => i + 2)
+                            .reduce((p, c) => p + c));
+
+        }
+    </script>  
+
+
+         {
+            // 현재 상태를 기억하고 변경된 최신 상태를 유지
+            const box = document.querySelector(".box");
+            const toggleButton = document.querySelector(".toggle");
+
+            const toggle = (
+                function() {
+                    let isShow = false;
+                    return function() {
+                        box.style.display = isShow ? "block" : "none";
+                        isShow = !isShow;
+                    }
+                }
+            )();
+
+            toggleButton.onclick = toggle;
+        }
+    </script> 
+
+
+    <script>
+        {
+            // 전역변수를 사용하는 경우
+            const button = document.getElementById("global");
+            const span = document.getElementById("globalCount");
+
+            let counter = 0;
+
+            function increase() {
+                return ++counter;
+            }
+
+            button.onclick = function() {
+                span.innerHTML = increase();
+            };
+
+            // counter가 전역변수로 설정되어 있기 때문에 의도하지 않게 변경되는 문제가 있음
+            setTimeout(() => counter += 100, 5000);
+        }
+
+        {
+            // 지역변수를 사용하는 경우 => 함수가 호출될 때마다 변수가 초기화되는 문제가 있음
+            const button = document.getElementById("local");
+            const span = document.getElementById("localCount");
+
+            function increase() {
+                let counter = 0;
+
+                return ++counter;
+            }
+
+            button.onclick = function() {
+                span.innerHTML = increase();
+            };
+        }
+
+        {
+            // 클로저를 사용하는 경우 
+            const button = document.getElementById("closure");
+            const span = document.getElementById("closureCount");
+
+            const increase = (function () {
+                let counter = 0;
+
+                return function() {
+                    return ++counter;
+                };
+            })();
+
+            button.onclick = function() {
+                span.innerHTML = increase();
+            };
+        }
+    </script>   
+
+
+
+    <script>
+        {
+            // 커링(currying)
+            // 여러 개의 인수를 받는 함수를 하나의 인수만 받는 함수로 연속적으로 변환해 주는 함수형 프로그래밍 기법
+            // f(a, b, c) ---> f(a)(b)(c)
+
+            function curry(myFunction) {
+                return function(a) {
+                    return function(b) {
+                        return myFunction(a, b);
+                    };
+                };
+            }
+
+            function add(a, b) {
+                return a + b;
+            }
+
+            const adder = curry(add);
+            const add7 = adder(7);
+            console.log(add7(3));
+
+            console.log(curry(add)(10)(20));
+        }
+    </script> 
+
+
+
+    <div id="abc" class="xyz">     내용(content)      </div>
+    ~~~~ ~~~~~~~~~~~~~~~~~~~~ 
+    요소(element)        속성(attribute)
+    
+    <html>
+        <head>
+            <title > </title>
+            <script ></script>
+        </head>
+        <body>
+            <div>
+                <p></p>
+                <image />
+            </div>
+        </body>
+    </html>
+
+
+
+HTMLCollection 객체가 동적으로 변경되므로, 런던의 class 속성은 변경되지 않는 문제가 있음
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+       .red {
+            color: red;
+       }
+       .blue {
+            color: blue;
+       }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>도시</h1>
+        <ul>
+            <li id="one" class="red">서울</li>
+            <li id="two" class="red">런던</li>
+            <li id="three" class="red">뉴욕</li>
+            <li id="four">도쿄</li>
+        </ul>
+    </div>
+
+    <script>
+        const elems = document.getElementsByClassName("red");
+        console.log(elems);
+        for (let i = 0; i < elems.length; i ++) {
+            console.log("before", i, elems.length);
+            elems[i].className = "blue";
+            console.log("after", i, elems.length);
+        }
+    </script>
+</body>
+</html>    
+
+
+해결 방법 1. 역순으로 변경
+    <script>
+        const elems = document.getElementsByClassName("red");
+        console.log(elems);
+        for (let i = elems.length - 1; i >=0; i --) {
+            console.log("before", i, elems.length);
+            elems[i].className = "blue";
+            console.log("after", i, elems.length);
+        }
+    </script>
+
+
+해결 방법 2. HTMLCollection 객체를 배열로 변경
+    <script>
+        const elems = document.getElementsByClassName("red");
+        console.log(elems);
+        console.log([...elems]);
+
+        [...elems].forEach(elem => elem.className = "blue");
+    </script>
+
+
+해결 방법 3. querySelectorAll 메서드를 사용 
+    <script>
+        const elems = document.querySelectorAll(".red");
+        console.log(elems);
+        console.log([...elems]);
+
+        [...elems].forEach(elem => elem.className = "blue");
+    </script>
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        p { padding: 30px; border: 1px solid red; background-color: red; }
+    </style>
+</head>
+<body>
+    <p>
+        이벤트 전파
+        <button>클릭해 보세요.</button>
+    </p>
+    
+    <script>
+        const body = document.querySelector("body");
+        const p = document.querySelector("p");
+        const button = document.querySelector("button");
+
+        body.addEventListener("click", function () {
+            console.log("Capturing for body");
+        }, true);
+        p.addEventListener("click", function () {
+            console.log("Capturing for p");
+        }, true);
+        button.addEventListener("click", function () {
+            console.log("Capturing for button");
+        }, true);
+
+        body.addEventListener("click", function () {
+            console.log("Bubbling for body");
+        });
+        p.addEventListener("click", function () {
+            console.log("Bubbling for p");
+        });
+        button.addEventListener("click", function () {
+            console.log("Bubbling for button");
+        });
+    </script>
+    
+</body>
+</html>
+
+
+
+
+이벤트 위임
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        p { padding: 30px; border: 1px solid red; background-color: red; }
+    </style>
+</head>
+<body>
+    <ul>
+        <li id="li1">첫번째</li>
+        <li id="li2">두번째</li>
+        <li id="li3">세번째</li>
+    </ul>
+    <script>
+        const ul = document.querySelector("ul");
+        console.log(ul);
+
+        ul.addEventListener("click", function (e) {
+            // console.log(e.target);
+            // console.log(e.target.id);
+            console.log(`${e.target.innerHTML} <li>가 클릭되었습니다.`);
+        });
+    </script>
+    
+</body>
+</html>
+
+
+<body>
+    <a href="https://www.naver.com">네이버로 이동</a>
+    <script>
+        const a = document.querySelector("a");
+
+        a.addEventListener("click", function(e) {
+            e.preventDefault();
+
+            window.location.href = "https://www.google.com";
+        });
+    </script>    
+</body>
