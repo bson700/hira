@@ -822,3 +822,36 @@ HTMLCollection 객체가 동적으로 변경되므로, 런던의 class 속성은
         });
     </script>    
 </body>
+
+
+
+비구조화
+    <script>
+        const numbers = [ 1, 2, 3, 4, 5 ];
+
+        // numbers 배열의 첫번째 값을 a, 두번째 값을 b에 할당
+        const [ a, b ] = numbers;
+        console.log(a);
+        console.log(b);
+
+        // person 객체의 name을 name, age를 age 변수에 할당
+        const person = { 
+            name: "홍길동", 
+            age: 23, 
+            email: "hong@test.com"
+        };
+
+        const { age, name } = person;
+        console.log(age);
+        console.log(name);
+
+        // numbers 배열의 첫번째 값을 first 변수에, 나머지 값(배열)을 rest 변수에 할당
+        const [ first, ...rest ] = numbers;
+        console.log(first);
+        console.log(rest);
+
+        // person 객체의 email 속성의 값을 email 변수에, 나머지(객체)을 restProps 변수에 할당
+        const { email, ...respPros } = person;
+        console.log(email);
+        console.log(respPros);
+    </script> 
