@@ -1,0 +1,97 @@
+# 실습에 필요한 프로그램 설치
+- Visual Studio Code 설치 : https://code.visualstudio.com/download
+- node.js 설치 : https://nodejs.org/ko/download
+
+
+## 1일차
+
+* 변수: 메모리 주소
+* 리터럴: 값 그자체
+
+* 데이터 타입: 변수에 값을 할당하는 순간, 값의 데이터 타입이 그 변수의 데이터 타입이 됨. 리터럴이 할당되는 순간.
+
+* undefined: 변수가 선언되고, 값이 할당되지 않은 상태 -> 데이터 타입을 규정할 수 없다.
+
+* 객체: 키 밸류 형태의 값의 나열
+
+* 배열: 여러개의 값을 나열
+
+* 테이블 형태의 데이터는 객체 배열 형태로 저장한다.
+  백엔드의 데이터는 주로 객체 배열 형태이다.
+  객체는 하나의 레코드(행) 이라고 볼 수 있다.
+  JS의 object는 python에서 ( dictionary )이다.
+
+* 객체, 배열의 차이점
+  - 순서가 중요하다. -> 배열은 인덱스가 있다.
+  - 키가 중요하다. -> 랜덤 액세스가 가능하다.(예를 들면, 특정 index의 email 만 뽑아 올 수 있다.)
+
+* *표현식: 값을 만들어 내는 구문 또는 값 그 자체
+
+* 제어
+  1. if .. then ..
+  2. loop
+
+
+* typeof 변수. typeof 리터럴
+
+* JS 는 클래스가 없다. 함수를 new 하면 생성자 함수라고 한다.
+
+* REPL은 Read–Eval–Print Loop의 약자로, 코드를 한 줄씩 입력하고 즉시 실행 결과를 확인할 수 있는 환경
+  - Read: 사용자가 입력한 코드를 읽고
+  - Eval: 그 코드를 평가(실행)하고
+  - Print: 결과를 출력한 다음
+  - Loop: 다시 입력을 기다리는 루프 구조
+
+  -> 
+
+* node REPL 기반
+Welcome to Node.js v22.20.0.
+Type ".help" for more information.
+> var i = 100;
+undefined
+> var j = 200;
+undefined
+> i + j
+300
+> console.log(i + j);
+300
+undefined
+>
+
+
+* VS code 환경설정
+  -  Settings > Auto Save > afterDelay
+
+
+
+* REPL: 명령 읽기 > 해석, 실행 > 출력 > 루프
+
+* Live Server - Ritwick Dey
+  - 개발한 html 코드를 웹서버에서 확인할 수 있다.
+  - 마우스 오른쪽 버튼 > Open with Live Server
+  - 
+
+
+* + 제외하고 암묵적으로 number로 형변환 (임시적 형변환)
+> 5 + '10'
+'510'
+> 5 - '10'
+-5
+> '5' - 10
+-5
+> 5 * '10'
+50
+> 5 % '10'
+5
+> 5 / '10'
+0.5
+> 10 / 0
+Infinity
+> typeof 10/0
+NaN
+
+
+* 이스케이프 문자
+  1. 인코딩/디코딩
+  2. \
+
