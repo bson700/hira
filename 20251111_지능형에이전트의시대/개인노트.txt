@@ -1,0 +1,409 @@
+<1교시>
+
+## 강사명: 김은연
+
+* AI와의 공통점
+  - 화내지 않는다.
+  - 평가하지 않는다.
+
+
+## 실습 환경
+
+1. 구글 로그인
+2. OpenAI Platform
+   - Sign Up -> Log in -> 키 획득
+3. Tavily -> 웹서핑 가능
+   - Sign Up -> Log in -> 키 획득
+
+## 인공지능
+Artifical : 인간이 만든 것
+Intelligence : 지적인 것
+컴퓨터로 하여금 인간의 지능을 흉내
+
+Physical AI: 지능 뿐만 아니라 행동도
+
+* 규칙기반: 전자계산기
+  데이터 + 규칙 -> 답변
+
+* 머신러닝: 머신이 데이터의 패턴을 학습해서 정답을 유추하는 룰을 찾는다.
+  데이터 + 답변 -> 규칙
+
+## 신경망
+신경세포 기반 머신러닝 시스템
+1956년에 처음으로 구성한 알고리즘
+입력데이타 들어오면 가중치가 곱해지고 변환과정을 거쳐 아웃풋(y): 선형회귀, 로지스틱회귀 등 간단한 것만 가능
+
+## 딥러닝(신경망)
+층구조로 만듬
+다음세포로 보내는 가중치, 이 적당한 w 를 찾아가는 과정(학습)
+
+## 모델구축
+모델 생성: 초기에는 w 를 랜덤하게 생성
+못맞추는 상태에서 학습
+에러: 예측을 했을 때 정
+에러나면 w를 추론하고 다시셋팅하고를 반복
+출시
+
+## 추론
+출시하면 w를 조정하지 않고 추론만 하게 됨.
+정답을 100% 맞추는 모델은 없음
+
+## 프롬프트 엔지니어링
+원하는 결과를 얻기 위해서 또 학습을 할 수 없기 때문에
+입력을 건드린다. -> 프롬프트 엔지니어링 (인풋을 연구)
+
+## 프롬프트 엔지니어링 기법 5개
+제한사항
+
+## 창발적 현상: 모델이 커지면서 예측하지 못했던 현상
+- 학습을 많이하면서 추론 능력이 생김. React 하는 능력(다시 말함). 깊이 사고(단계별 사고) 능력 생김.
+- React 하는 능력(다시 말함) --> Agent 로 활용 가능 하겠다.
+
+## 언어 딥러닝 모델
+- 1986년: RNN
+- 2023년: GPT-4
+
+## GPT 출현
+- 신기해함
+- 점점 관대하지 않음
+
+## 채팅 서비스
+- 서비스의 오류의 책임은 회사에 있음 -> 잘못 말할 가능성이 있기 때문에 조심해야 한다.
+- 처음: 채팅
+- 지금: 정확한 지식을 얻어내거나, 일을 시키기 위해 사용
+- 현재는 Private LLM 에 초점을 맞춰서 개발되기도 한다.
+
+## Transformet : 병렬 프로그램
+망을 통과하는게 병렬로 이루어지고, 마지막에 통합
+학습 파라미터: 연결선의 개수
+
+## GPT-3
+확률적으로 대답을 하도록 만들어짐
+처음 출시 때는 매끄럽지 않았음. 사람에 편하게 말하지 않았음.
+
+## RLHF (강화학습)
+망구조 확률값에 RLHF 적용
+환경이 있고, 환경에서 점수를 획득하게 되는데, 점수를 많이 획득하도록 학습하는게 강화학습니다.
+대표적으로 알파고.
+- environment: 바둑판 환경 점수를 많이 획득하는 policy 를 학습
+- 인간의 피드백인 환경. 이 환경에서 좋은 점수를 얻도록 학습.
+
+##
+Context 를 주면, 사고하는 능력
+
+## 트랜스포머는 이미지, 음성도 생성
+
+## Agent
+LLM에서 사용자의 요청에 따라 자기가 할 수 없는 기능들을 추가로 하도록 하는 기능?
+LLM 의 입력 값에서 생각하고, 말하고, 자기가 한말을 다시 관찰하고...
+외부의 기능들도 수행
+사람의 개입 없이 스스로 
+1. 자동화: RAG (RAG와 다르게 Agent 는 자율적으로 계획하고 진행하는 자율성을 가졌다.)
+2. 
+3. 자율성
+
+## 서비스 해도 되겠다.의 판정?
+
+-------------------------------------------------------------------------------
+
+<2교시>
+
+## Gartner 2023년 AI Hype Cycle 
+1) Innovation Trigger : 트리거 되는 시점
+2) 기대감 상승하며 꼬대기 : 생성형 AI
+3) 별거 아니네(환멸의 상태)
+4) 기술력 보충 : VISION
+5) 기술의 안정화
+
+## 자율 자동차 물체 디텍션
+- 생성형 AI 는 아님. 그냥 AI.
+
+## Gartner 2023년 AI Hype Cycle
+
+2) AI Agent
+3) Generative AI
+
+## 실습
+Colab: 클라우드 기반의 파이썬 해석기
+https://colab.research.google.com/
+
+## 파일 > 노트 업로드 > 둘러보기 > 1. 프롬프트 엔지니어링, 파인튜닝, RAG, Agent 의 원리.ipynb
+
+## 필요한 라이브러리 설치
+numpy : Vector 연산을 다루는 라이브러리. 
+  -> 실행▶ > Uninstall > 세션 다시시작 > 실행▶
+  -> 한번 세션 다시시작을 하고, 그 다음에 나오는 건 취소.
+
+* """ 3개: 줄바꿈 가능 문자열
+
+* mini 버전: 가중치의 단위수를 줄임: 64비트면 32비트로
+
+* usage=CompletionUsage(completion_tokens=159, prompt_tokens=301, total_tokens=460,
+
+* temperature=0.7 : 창의적
+* max_tokens=500 : max_tokens 을 쓰면 말이 끊어질 수 있다.
+
+
+## LLM 이 학습하지 않는 나의 데이터를 학습하게 하고 싶어
+
+Private LLM => Fine-Tuning, RAG
+- Fine-Tuning: LLM 자체를 건드리는 것
+- RAG: LLM을 건드리지 않음. 사용자의 질문에 적합한 대답을 컨닝 페이퍼(컨텍스트)로 줌. 질문하고 컨텍스트를 연결해서 대답을 줌.
+
+
+## 파일튜닝(Fine-Tuning)
+* LLM 자체를 건드리는 것
+* 문제
+  1) 원래 지식, 추가 지식: 추가 지식이 상충된다면 원래, 추가? 잘 모르다. 확률이므로.
+  2) 할루시네이션: 예) 세종대왕 맥북
+  3) 파인튜닝은 자주시킬 수있다. 소비자의 리뷰는 매일 생기므로, 이때 어렵다.
+  4) 추가 학습을 위해서는 인프라(GPU)가 필요
+  5) 학습시킬 LLM 도 필요
+* 질문-답변 세트로 데이터를 준비하기 어려움
+
+## RAG
+* 사용자의 질문에 알맞게 대답하는 기술
+* 전이 학습: 목적을 바꿔서 다른 분야에 이용
+* 파인튜닝: 추가 학습
+* RAG는 이 아이디어 때문에 가능 : Everything can be a vector
+
+* Everything can be a vector
+  비정형 데이터를 정형화된 임베딩 벡터로 바꿈
+
+* 임베딩
+  어떤 데이터 공간(텍스트 공간, 이미지 공간), 그 공간의 관계를 최대한 반영하면서 벡터 공간으로 옮기는 기술을 임베딩이라고 한다.
+  옮기면서 텍스트 관계가 깨지면 안됨.
+  벡터 공간으로 가져오면 뭐가 좋은가? 서치가 가능하다.
+  서치를 해서 비슷한 벡터를 뽑아서, 그 벡터가 어사인된 문서를 찾아냄. 이를 LLM 에 컨텍스트로 줌
+
+* 문서 검색을 벡터 검색으로 관련된 문서를 검색한다.
+
+* RAG 는 프롬프트도 중요하다.
+  - "너는 컨텍스트에 기반해서만 대답해야 해"
+
+* 작은 정보(Chunks)로 쪼갬
+
+* 유사도: 코사인 유사도
+
+* 사용자에게 부합되는 커닝 페이퍼를 잘 줘야 한다
+  문서를 유사도를 통해서 문서간의 관계를 잘 찾아줘야 한다.
+  그래서, 임베딩 모델의 성능이 중요하다.
+
+* model="text-embedding-3-large"
+len(res.data[0].embedding)
+3072
+-> 3072 개의 백터들
+
+* model="text-embedding-3-small"
+1536
+
+* llm=ChatOpenAI(model="gpt-4o-mini", temperature=0, max_tokens=100)
+gpt-5 버전에는 temperature 가 없다. deep thinking 이기 때문.
+
+* temperature=0 : 정직하게 확률대로
+
+* stream : 추론한 순서대로 나온 순서대로
+generator 호출할때마다 토큰 단위로 뱉어내주고(던져주고) 메모리에서 사라지는 애
+
+* end="" : 바꾸지 않도록
+이렇게 하면 stream 에서도 결과가 잘 나옴.
+
+## chain = prompt template | llm | OutputParser
+OutputParser : 응답만 파싱
+
+* PromptTemplate
+from langchain import PromptTemplate
+from langchain.prompts import  ChatPromptTemplate
+
+* f 스트링
+
+* llm.invoke
+  llm.stream
+
+* chain1 = prompt | llm
+  chain1.invoke
+
+* chain2 = prompt | llm | outparser
+  chain2.invoke
+
+* | 는 흐름이다.
+
+* RAG = retriever(문서준비 + 검색) + 생성(Generation)
+
+## RAG 파이프라인
+###검색
+1. 문서를 텍스트(다큐먼트) 형태로 로드
+2. 청크 단위로 분할(하나의 청크가 하나의 벡터로 할당 되기 위해)
+3. 임베딩 => 벡터 DB 구성
+4. 리트리버(서치 도구) 설정
+###생성
+5. 생성자에게 서치 결과와 사용자 질문 전달=> 체인구성
+6. 응답 생성(체인 invoke)
+
+## booksv_02.csv, 국회회의록_22대_422회_1차_문화체육관광위원회.PDF 임포트
+
+* PDFPlumberLoader
+  PDF...Loader
+
+* 문서를 텍스트(다큐먼트) 형태로 로드
+[Document(metadata={'source': '/content/booksv_02.csv', 'row': 0}, page_content='
+
+[
+Document(metadata= ..., page_content= ...),
+Document(),
+Document(),
+]
+
+* CSV 는 하나의 행이 document 로 잡힘
+  pdf 는 페이지 단위.
+
+* 문장 안에 너무 많은 정보를 담으면, 이 벡터와도 저 벡터와도 비슷해 진다. 그러므로, 문장 안에 너무 많은 정보를 담을 필요는 없다.
+  그러므로 pdf 는 Spliter 를 사용하면 좋다.
+
+
+* RecursiveCharacterSpliter
+전체적인 맥락을 보고 그 안에서 split 하고, ...
+Document 를 자르는데 좋다.
+
+* chunk_overlap=30
+교집합을 주겠다.
+이웃한 문서들이 유사도 검색에서 조금 더 유사도를 반영할 수 있도록.
+
+* mmr : 서치결과에서 다양성을 확보해서 섞어준다. 얘가 있으면 fetch_k 도 들어간다.
+  fetch_k개 비슷한 걸 찾아서, 7개 다양성을 확보해서 섞어준다.
+
+* 기술적인 용어나 이름은 번역하지 않고 그대로 사용해 주세요.
+  -> 모든 기술적인 용어까지 한글로 번역하는 것 방지
+
+
+* RunnablePassthrough 외부 입력은 통과시키겠다. 사용자로 부터 받아서 패스해 줄꺼야.
+  context 는 리트리버로 부터 받겠다.
+
+* PDF Document
+  - metadata
+    - source
+    - page
+  - page_content
+
+* chunk_size
+너무 길면 검색에 도움이 되지않는다.
+너무 짧으면 의미를 잃어버릴 수 있다.
+
+* 지금까지는 Naive RAG
+  - 문제: , , , 벡터 DB 에 임베딩한 결과를 서치하는 것이 정답일까?, 컨텍스트 다볼까?
+  
+## Advanced RAG
+
+
+## RAG 성능평가
+서비스를 가려면 성능평가를 해야 한다.
+
+* 장동진: Amazon Bedrock과 Advanced RAG 기술을 활용한 QnA Chatbot 서비스
+고객 특화 데이터를 기반으로 거짓이 없는 QnA 시스템 만들기
+- 고객 특화 데이터 -> 파인튜닝, RAG
+- 자주 -> RAG
+
+* Context : Cheat Sheet
+
+* 거짓없는 응답 -> Advanced Context Retrieval
+  - Naive RAG 는 부족
+
+1. Hybrid-Fusion : 2가지 검색방법을 씀
+  - Semantic : Vector Search.
+  - Lexical : 동시 출현 단어의 횟수를 세는 방법. Semantic 의 부족한 점을 보완.
+
+2. RAG-Fusion
+  - 질문이 들어오면 여러개의 질문으로 변화시키겠다.
+
+3. HyDE
+  - 예상 답변과 함께 서치
+
+4. Parent Document
+  - 청크를 분할하고, 더 작은 청크로 분할. 문맥은 긴 문맥으로.
+  - 검색은 자식, 반환은 부모
+
+5. Reranker
+  - Lost in middle : 창발적 현상. 설계시 의도하지 않음. 입력이 길때 이 입력을 다 보지 않는다. 중간 잘 안봄.
+    -> 중요한걸 위로 올리자
+
+-> 1, 4, 5 유효한 듯 보임. : 코드 구현 가능성이
+
+
+* LLM 의 결과물을 강력한 LLM 을 이용하여 평가
+
+## Evaluation
+
+1. Systematic-based
+Bedrock(Jurrasic): 이게 LLM
+
+2. Human-based
+
+## regas 평가
+- 자동화 평가
+
+* 주요지표
+- Factfulness: 얼마나 컨텍스트 기반으로 대답했는가?
+
+* RAGAS 기준
+
+-------------------------------------------------------------------------------
+
+< Agent >
+
+*  TavilySearchResults(max_results=3, api_wrapper=TavilySearchAPIWrapper(tavily_api_key=SecretStr('**********')))]
+
+* agent="zero-shot-react-description"
+- react 에 관한 프롬프트: 맞았는지 확인하고, 아닌거 같으면 다시해.
+- 어떤 거 재한 없이 react 하도록 하는 프롬프트
+- Action - Observation - Thought
+
+* verbose=True 수다수러운
+- 안의 일을 밖에 내보내줌
+
+
+
+* from langchain.agents import initialize_agent
+tools=load_tools(["llm-math"], llm=llm)
+tools.append(TavilySearchResults(max_results=3))
+agent=initialize_agent(tools=tools, llm=llm, agent="zero-shot-react-description", verbose=True)
+agent.run("""쵸코렛을 24개 사려고해
+하나에 250원이었는데 지난 주에 33% 인상되었어
+얼마가 필요할까""")
+
+> Entering new AgentExecutor chain...
+오늘 가격이 얼마나 되는지 계산해야 합니다. 먼저, 원래 가격인 250원에 33% 인상이 얼마인지 계산해 보겠습니다. 그런 다음, 총 24개의 초콜릿 가격을 계산할 것입니다.  
+Action: Calculator  
+Action Input: 250 * (1 + 0.33)  
+Observation: Answer: 332.5
+Thought:초콜릿 하나의 새로운 가격은 332.5원입니다. 이제 이 가격을 바탕으로 24개를 구매할 때 필요한 총 금액을 계산해야 합니다.  
+Action: Calculator  
+Action Input: 332.5 * 24  
+Observation: Answer: 7980.0
+Thought:초콜릿 24개의 가격은 7980원입니다.  
+Final Answer: 7980원
+
+> Finished chain.
+7980원
+
+## r_tool=create_retriever_tool(retriever=my_retriever, name="document_search",
+                      description="use this tool to search information from documents")
+LLM 이 description을 보고 이 툴을 쓸지 말지 결정
+
+
+## create_tool_calling_agent, AgentExecutor
+
+## AIMessage(content='', additional_kwargs={'tool_calls': [{'id': 'call_bUS5CGnCe9gycKM6xZlZ6IK8', 'function': {'arguments': '{"query":"lgcns 주가"}', 'name': 'tavily_search_results_json'},
+tool_calls
+tavily_search_results_json
+
+## AI Agent 는 통제하기 힘들다
+원치않는 대답에 대해서는 AI Agent 는 책임지지 못한다.
+테스트 많이 해야 한다.
+
+## RAG 는 통제 가능.
+
+
+##
+  - RAG : 챗봇 정도 수준
+  - Agent : 회사 내 작업 효율화
+  
